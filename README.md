@@ -3,7 +3,7 @@
 Este projeto é baseado no sistema [Dedalus](https://dedalus.usp.br) da USP, com o objetivo de permitir a catalogação e busca de livros de forma simples e eficiente. O sistema conta com dois principais campos de interação para os usuários:
 
 1. **Cadastro de Livros**: O usuário pode cadastrar livros, preenchendo informações como **Autor**, **Título**, **Ano de Publicação** e **Resumo do Conteúdo** (ou descrição do livro). Esses dados são armazenados no sistema para posterior consulta.
-   
+
 2. **Busca de Livros**: Outro usuário pode buscar livros inserindo qualquer uma das seguintes informações: **Autor**, **Título**, **Ano de Publicação** ou **Resumo do Conteúdo**. O sistema retorna os 10 livros mais próximos da busca, com base nos critérios fornecidos.
 
 ## Funcionalidades
@@ -19,13 +19,13 @@ Este projeto é baseado no sistema [Dedalus](https://dedalus.usp.br) da USP, com
   - **Título**
   - **Ano de Publicação**
   - **Resumo do Conteúdo** (ou descrição)
-  
+
   O sistema retorna os 10 livros mais relevantes, de acordo com os parâmetros de busca fornecidos, utilizando um algoritmo de busca **fuzzy**.
 
 ## Como Funciona
 
 1. **Cadastro**: O usuário preenche os campos de informações do livro e submete o formulário. O livro será salvo no banco de dados para consultas futuras.
-  
+
 2. **Busca**: O outro usuário pode realizar uma busca utilizando um ou mais critérios. O sistema utiliza o algoritmo de busca fuzzy para encontrar os livros mais próximos aos termos de busca inseridos e retorna os 10 mais relevantes.
 
 ## Tecnologias Utilizadas
@@ -49,66 +49,61 @@ Este projeto é baseado no sistema [Dedalus](https://dedalus.usp.br) da USP, com
 
 1. **Clone o repositório**:
     ```bash
-    git clone TODO
+    git clone https://github.com/dedalusp/icarusp.git
+    cd icarusp
     ```
 
-2. **Instale as dependências do Backend (Rust)**: TODO revisar
-    - Primeiro, instale o **Rust** caso não tenha:
-      - [Instalar Rust](https://www.rust-lang.org/learn/get-started)
-      
-    - Instale as dependências do projeto:
+2. **Instale as dependências do Projeto**:
+    - Primeiro, instale o gerenciador de pacotes [brew](https://brew.sh/),
+    dessa forma, temos um instalador comum tanto para sistemas UNIX (tanto
+    Linux quanto OSX).
+    - Em seguida, instale **Rust**, **TypeScript** e outras dependências do projeto:
       ```bash
+      brew install rust typescript node sqlite
+      ```
+
+3. **Dependências do Backend (Rust)**:
+    - Utilizaremos o **Cargo** para gerenciar as dependências do projeto.
+      ```bash
+      cd backend
       cargo build
       ```
 
-3. **Instale as dependências do Frontend (TypeScript + Svelte)**: TODO revisar
-    - Primeiramente, instale o **Node.js** caso não tenha:
-      - [Instalar Node.js](https://nodejs.org/)
-      
-    - Navegue até o diretório do frontend:
+3. **Dependências do Frontend (TypeScript)**:
+    - Para o frontend, utilizaremos o [npm](https://www.npmjs.com/) para instalar as dependências:
       ```bash
       cd frontend
-      ```
-
-    - Instale as dependências do frontend:
-      ```bash
       npm install
       ```
 
-4. **Configure o Banco de Dados SQLite**: TODO revisar
-    - O banco de dados será automaticamente criado quando o sistema for executado pela primeira vez. Caso queira realizar a configuração manual, crie um banco de dados SQLite e configure as credenciais no arquivo de configuração do backend.
-
-5. **Inicie o servidor Backend (Rust)**: TODO revisar
-    - Execute o servidor com o seguinte comando:
+4. **Iniciar os Servidores (Backend e Frontend)**:
+    - Para rodar o backend, utilize o comando:
       ```bash
       cargo run
       ```
-
-6. **Inicie o servidor Frontend (Svelte + TypeScript)**: TODO revisar
-    - Para o frontend, execute o comando:
+    - Em outra aba do terminal, rode o frontend:
       ```bash
+      cd frontend
       npm run dev
       ```
+    - Acesse o frontend via `http://localhost:3000` e o backend (se necessário) via `http://localhost:5000`.
 
-7. **Acesse a aplicação**: TODO revisar
-    - A aplicação estará disponível no navegador, geralmente em `http://localhost:5000` para o backend e `http://localhost:3000` para o frontend.
+Extra. **Configure o Banco de Dados SQLite**:
+    - O banco de dados será automaticamente criado quando o sistema for executado pela primeira vez. Caso queira realizar a configuração manual, crie um banco de dados SQLite e configure as credenciais no arquivo de configuração do backend.
 
-## Algoritmo de Busca Fuzzy
+## Algoritmo de Busca
 
-A busca no sistema é realizada utilizando o algoritmo **fuzzy search**, que permite encontrar livros que correspondem de forma aproximada aos termos de busca, mesmo que haja pequenas diferenças na digitação ou no formato das palavras.
+A busca no sistema é realizada utilizando busca vetorial, que permite encontrar livros que possuam conteúdos semelhantes a um dado livro de referência. Para
+ajustar o algoritmo, é necessário alterar o modelo de linguagem utilizado, que
+pode ser encontrado no arquivo `backend/models/model.rs`; assim como o caminho
+para este novo modelo no arquivo `backend/main.rs`.
 
-## Contribuições 
+## Contribuições
 
-Se você deseja contribuir para este projeto, siga os seguintes passos: TODO revisar
+Se você deseja contribuir para este projeto, siga os seguintes passos: T
 
 1. Faça um fork do repositório.
 2. Crie uma branch para a sua feature (`git checkout -b minha-feature`).
 3. Comite suas mudanças (`git commit -am 'Adiciona nova feature'`).
 4. Faça o push para a branch (`git push origin minha-feature`).
 5. Abra um Pull Request no GitHub.
-
-## Licença
-
-TODO
-
----
