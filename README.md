@@ -16,7 +16,7 @@ Este projeto é baseado no sistema [Dedalus](https://dedalus.usp.br) da USP, com
   - **Ano de Publicação**: Ano de publicação do livro.
   - **Resumo do Conteúdo**: Descrição breve sobre o conteúdo do livro.
  
- - **Cadastro de Papers**: O usuário pode inserir os dados do paper em um formulário com os seguintes campos:
+- **Cadastro de Papers**: O usuário pode inserir os dados do paper em um formulário com os seguintes campos:
   - **Autor**: Nome do autor do paper.
   - **Título**: Título do paper.
   - **DOI**: DOI do livro.
