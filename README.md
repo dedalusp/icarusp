@@ -2,19 +2,29 @@
 
 Este projeto é baseado no sistema [Dedalus](https://dedalus.usp.br) da USP, com o objetivo de permitir a catalogação e busca de livros de forma simples e eficiente. O sistema conta com dois principais campos de interação para os usuários:
 
-1. **Cadastro de Livros**: O usuário pode cadastrar livros, preenchendo informações como **Autor**, **Título**, **Ano de Publicação** e **Resumo do Conteúdo** (ou descrição do livro). Esses dados são armazenados no sistema para posterior consulta.
+1. **Cadastro de Livros e papers**: O usuário pode cadastrar livros e papers, preenchendo informações como **Autor**, **Título**, **Ano de Publicação** e **Resumo do Conteúdo** (ou descrição do livro). Esses dados são armazenados no sistema para posterior consulta.
 
-2. **Busca de Livros**: Outro usuário pode buscar livros inserindo qualquer uma das seguintes informações: **Autor**, **Título**, **Ano de Publicação** ou **Resumo do Conteúdo**. O sistema retorna os 10 livros mais próximos da busca, com base nos critérios fornecidos.
+2. **Busca de Livros ou papers**: Outro usuário pode buscar livros ou papers inserindo qualquer uma das seguintes informações: **Autor**, **Título**, **Ano de Publicação** ou **Resumo do Conteúdo**. O sistema retorna os 10 livros mais próximos da busca, com base nos critérios fornecidos.
 
 ## Funcionalidades
 
 - **Cadastro de Livros**: O usuário pode inserir os dados do livro em um formulário com os seguintes campos:
   - **Autor**: Nome do autor do livro.
   - **Título**: Título do livro.
+  - **ISBN**: ISBN do livro.
+  - **Edição**: Edição do livro.
   - **Ano de Publicação**: Ano de publicação do livro.
   - **Resumo do Conteúdo**: Descrição breve sobre o conteúdo do livro.
+ 
+ - **Cadastro de Papers**: O usuário pode inserir os dados do paper em um formulário com os seguintes campos:
+  - **Autor**: Nome do autor do paper.
+  - **Título**: Título do paper.
+  - **DOI**: DOI do livro.
+  - **Ano de Publicação**: Ano de publicação do paper.
+  - **Resumo do Conteúdo**: Descrição breve sobre o conteúdo do paper.
+  - **Bibliografia**: Bibliografia do paper.
 
-- **Busca de Livros**: O usuário pode buscar livros por um ou mais critérios:
+- **Busca de Livros ou papers**: O usuário pode buscar livros por um ou mais critérios:
   - **Autor**
   - **Título**
   - **Ano de Publicação**
@@ -24,9 +34,9 @@ Este projeto é baseado no sistema [Dedalus](https://dedalus.usp.br) da USP, com
 
 ## Como Funciona
 
-1. **Cadastro**: O usuário preenche os campos de informações do livro e submete o formulário. O livro será salvo no banco de dados para consultas futuras.
+1. **Cadastro**: O usuário preenche os campos de informações do manuscrito e submete o formulário. O manuscrito será salvo no banco de dados para consultas futuras.
 
-2. **Busca**: O outro usuário pode realizar uma busca utilizando um ou mais critérios. O sistema utiliza o algoritmo de busca fuzzy para encontrar os livros mais próximos aos termos de busca inseridos e retorna os 10 mais relevantes.
+2. **Busca**: O outro usuário pode realizar uma busca utilizando um ou mais critérios. O sistema utiliza o algoritmo de busca fuzzy para encontrar os manuscrito mais próximos aos termos de busca inseridos e retorna os 10 mais relevantes.
 
 ## Tecnologias Utilizadas
 

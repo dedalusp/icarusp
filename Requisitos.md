@@ -29,8 +29,9 @@ O sistema deve permitir que o usuário cadastre autores e livros; armazenando es
   - **Autor** (Obrigatório - Chave Estrangeira)
   - **Ano de Publicação** (Obrigatório)
   - **Abstract** (Obrigatório)
+  - **Bibliografia** (Obrigatório)
 
-**Obs**: autores devem ter sido previamente cadastrados antes de cadastar um livro.
+**Obs**: autores devem ter sido previamente cadastrados antes de cadastar um livro ou paper.
 
 ### 2.2. Busca
 
@@ -39,11 +40,11 @@ O sistema deve permitir que os usuários busque todos os livros ou papers public
 
 #### 2.2.2 Livros & Papers
 O sistema deve permitir que os usuários busquem livros utilizando um ou mais dos seguintes critérios:
-  - **Título**: recuperando informações relacionadas ao livro/paper.
+  - **Título**: o sistema deve retornar **(até) 10 livros/papers mais similares**, com base nos seus títulos, recuperando informações relacionadas ao livro/paper.
   - **Conteúdo**: o sistema deve retornar **(até) 10 livros/papers mais similares**, com base nos seus resumos de conteúdos ou abstracts.
 
 #### 2.2.3 Ano
-O sistema deve permitir que os usuários busque todos os livros publicados no mesmo ano.
+O sistema deve permitir que os usuários busque todos os livros publicados no mesmo ano. E todos os papers publicados no mesmo ano.
 
 #### 2.2.4 Nacionalidade Autor
 O sistema deve permitir que os usuários busque todos os livros publicados por autores que possuam uma mesma nacionalidade.
