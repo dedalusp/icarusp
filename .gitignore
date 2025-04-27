@@ -1,1 +1,11 @@
 /target
+*.log
+*.out
+*.bcf
+*.aux
+*.run.xml
+*.bbl
+*.blg
+*.nav
+*.snm
+*.toc
