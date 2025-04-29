@@ -1,41 +1,41 @@
 use std::fmt;
 
 // Estrutura Autor
-struct Autor {
-    nome: String,
-    ano_nascimento: u32,
-    pais: String,
+pub struct Autor {
+    pub nome: String,
+    pub ano_nascimento: u32,
+    pub pais: String,
 }
 
 impl Autor {
-    fn new(nome: &str, ano_nascimento: u32, pais: &str) -> Self {
+    pub fn new(nome: &str, ano_nascimento: u32, pais: &str) -> Self {
         Autor {
             nome: nome.to_string(),
             ano_nascimento,
             pais: pais.to_string(),
         }
     }
-    fn get_nome(&self) -> &str {
+    pub fn get_nome(&self) -> &str {
         &self.nome
     }
-    fn get_ano_nascimento(&self) -> u32 {
+    pub fn get_ano_nascimento(&self) -> u32 {
         self.ano_nascimento
     }
-    fn get_pais(&self) -> &str {
+    pub fn get_pais(&self) -> &str {
         &self.pais
     }
 }
 
 // Superclasse Manuscrito por composição
-struct Manuscrito {
-    titulo: String,
-    autor: Autor,
-    ano_publicacao: u32,
-    resumo: String,
+pub struct Manuscrito {
+    pub titulo: String,
+    pub autor: Autor,
+    pub ano_publicacao: u32,
+    pub resumo: String,
 }
 
 impl Manuscrito {
-    fn new(titulo: &str, autor: Autor, ano_publicacao: u32, resumo: &str) -> Self {
+    pub fn new(titulo: &str, autor: Autor, ano_publicacao: u32, resumo: &str) -> Self {
         Manuscrito {
             titulo: titulo.to_string(),
             autor,
@@ -43,29 +43,29 @@ impl Manuscrito {
             resumo: resumo.to_string(),
         }
     }
-    fn get_titulo(&self) -> &str {
+    pub fn get_titulo(&self) -> &str {
         &self.titulo
     }
-    fn get_autor(&self) -> &Autor {
+    pub fn get_autor(&self) -> &Autor {
         &self.autor
     }
-    fn get_ano_publicacao(&self) -> u32 {
+    pub fn get_ano_publicacao(&self) -> u32 {
         self.ano_publicacao
     }
-    fn get_resumo(&self) -> &str {
+    pub fn get_resumo(&self) -> &str {
         &self.resumo
     }
 }
 
 // Estrutura Livro, herdando Manuscrito por composição
-struct Livro {
-    manuscrito: Manuscrito,
-    isbn: String,
-    edicao: u32,
+pub struct Livro {
+    pub manuscrito: Manuscrito,
+    pub isbn: String,
+    pub edicao: u32,
 }
 
 impl Livro {
-    fn new(titulo: &str, autor: Autor, isbn: &str, ano_publicacao: u32, resumo: &str, edicao: u32) -> Self {
+    pub fn new(titulo: &str, autor: Autor, isbn: &str, ano_publicacao: u32, resumo: &str, edicao: u32) -> Self {
         Livro {
             manuscrito: Manuscrito::new(titulo, autor, ano_publicacao, resumo),
             isbn: isbn.to_string(),
@@ -75,14 +75,14 @@ impl Livro {
 }
 
 // Estrutura Paper, herdando Manuscrito por composição
-struct Paper {
-    manuscrito: Manuscrito,
-    doi: String,
-    bibliografia: String,
+pub struct Paper {
+    pub manuscrito: Manuscrito,
+    pub doi: String,
+    pub bibliografia: String,
 }
 
 impl Paper {
-    fn new(titulo: &str, autor: Autor, doi: &str, ano_publicacao: u32, resumo: &str, bibliografia: &str) -> Self {
+    pub fn new(titulo: &str, autor: Autor, doi: &str, ano_publicacao: u32, resumo: &str, bibliografia: &str) -> Self {
         Paper {
             manuscrito: Manuscrito::new(titulo, autor, ano_publicacao, resumo),
             doi: doi.to_string(),
@@ -92,7 +92,7 @@ impl Paper {
 }
 
 // Classe Entidade que engloba Manuscrito e Autor
-enum Entidade {
+pub enum Entidade {
     Livro(Livro),
     Paper(Paper),
     Autor(Autor),
