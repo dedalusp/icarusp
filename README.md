@@ -96,7 +96,7 @@ Este projeto é baseado no sistema [Dedalus](https://dedalus.usp.br) da USP, com
       cd frontend
       npm run dev
       ```
-    - Acesse o frontend via `http://localhost:3000` e o backend (se necessário) via `http://localhost:5000`.
+    - Acesse o serviço via `http://localhost:5173`.
 
 Extra. **Configure o Banco de Dados SQLite**:
     - O banco de dados será automaticamente criado quando o sistema for executado pela primeira vez. Caso queira realizar a configuração manual, crie um banco de dados SQLite e configure as credenciais no arquivo de configuração do backend.

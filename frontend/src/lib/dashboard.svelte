@@ -5,6 +5,19 @@
     let campoDeBusca: 'autor' | 'titulo' | 'conteudo' | 'ano' | 'nacionalidade' = 'autor'; // Campo selecionado
     let resultado: { titulo: string; nome_autor: string; ano_publicacao: number; resumo: string; nacionalidade: string } | null = null;
 
+    let nome = "";
+    let anoNascimento: number | null = null;
+    let pais = "";
+    let isbn = "";
+    let titulo = "";
+    let autor = "";
+    let anoPublicacao: number | null = null;
+    let resumo = "";
+    let edicoes: number | null = null;
+    let doi = "";
+    let abstractText = "";
+    let bibliografia = "";
+
     async function buscar() {
         try {
             const response = await fetch(`http://127.0.0.1:8080/buscar?valor_para_busca=${encodeURIComponent(valorParaBusca)}&campo_de_busca=${encodeURIComponent(campoDeBusca)}`);
@@ -15,6 +28,42 @@
         } catch (error) {
             console.error("Erro ao buscar dados:", error);
             resultado = null;
+        }
+    }
+
+    async function enviarDados() {
+        const dados = {
+            nome,
+            ano_nascimento: anoNascimento,
+            pais,
+            isbn,
+            titulo,
+            autor,
+            ano_publicacao: anoPublicacao,
+            resumo,
+            edicoes,
+            doi,
+            abstract_text: abstractText,
+            bibliografia,
+        };
+
+        try {
+            const response = await fetch("http://127.0.0.1:8080/inserir", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(dados),
+            });
+
+            if (!response.ok) {
+                throw new Error("Erro ao enviar dados");
+            }
+
+            const resultado = await response.text();
+            console.log("Resposta do backend:", resultado);
+        } catch (error) {
+            console.error("Erro ao enviar dados:", error);
         }
     }
 </script>
@@ -47,26 +96,27 @@
                 </div>
                 {#if selectedInsercaoTab === 'autor'}
                     <p class="bold">Insira os dados do novo autor:</p>
-                    <input type="text" placeholder="Nome" class="input-box" />
-                    <input type="number" placeholder="Ano de Nascimento" class="input-box" />
-                    <input type="text" placeholder="País de Nascimento" class="input-box" />
+                    <input type="text" placeholder="Nome" class="input-box" bind:value={nome} />
+                    <input type="number" placeholder="Ano de Nascimento" class="input-box" bind:value={anoNascimento} />
+                    <input type="text" placeholder="País de Nascimento" class="input-box" bind:value={pais} />
                 {:else if selectedInsercaoTab === 'livro'}
                     <p class="bold">Insira os dados do novo livro:</p>
-                    <input type="text" placeholder="ISBN" class="input-box" />
-                    <input type="text" placeholder="Título" class="input-box" />
-                    <input type="text" placeholder="Autor" class="input-box" />
-                    <input type="number" placeholder="Ano de Publicação" class="input-box" />
-                    <textarea placeholder="Resumo de Conteúdo" class="input-box content-box"></textarea>
-                    <input type="number" placeholder="Número de Edições" class="input-box" />
+                    <input type="text" placeholder="ISBN" class="input-box" bind:value={isbn} />
+                    <input type="text" placeholder="Título" class="input-box" bind:value={titulo} />
+                    <input type="text" placeholder="Autor" class="input-box" bind:value={autor} />
+                    <input type="number" placeholder="Ano de Publicação" class="input-box" bind:value={anoPublicacao} />
+                    <textarea placeholder="Resumo de Conteúdo" class="input-box content-box" bind:value={resumo}></textarea>
+                    <input type="number" placeholder="Número de Edições" class="input-box" bind:value={edicoes} />
                 {:else if selectedInsercaoTab === 'artigo'}
                     <p class="bold">Insira os dados do novo artigo:</p>
-                    <input type="text" placeholder="DOI" class="input-box" />
-                    <input type="text" placeholder="Título" class="input-box" />
-                    <input type="text" placeholder="Autor" class="input-box" />
-                    <input type="number" placeholder="Ano de Publicação" class="input-box" />
-                    <textarea placeholder="Abstract" class="input-box content-box"></textarea>
-                    <textarea placeholder="Bibliografia" class="input-box content-box"></textarea>
+                    <input type="text" placeholder="DOI" class="input-box" bind:value={doi} />
+                    <input type="text" placeholder="Título" class="input-box" bind:value={titulo} />
+                    <input type="text" placeholder="Autor" class="input-box" bind:value={autor} />
+                    <input type="number" placeholder="Ano de Publicação" class="input-box" bind:value={anoPublicacao} />
+                    <textarea placeholder="Abstract" class="input-box content-box" bind:value={abstractText}></textarea>
+                    <textarea placeholder="Bibliografia" class="input-box content-box" bind:value={bibliografia}></textarea>
                 {/if}
+                <button on:click={enviarDados} class="busca">Enviar</button>
             </div>
         {:else}
         <section>
