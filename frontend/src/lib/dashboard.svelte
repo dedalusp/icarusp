@@ -1,7 +1,22 @@
 <script lang="ts">
     let selectedTab: 'insercao' | 'consulta' = 'insercao';
     let selectedInsercaoTab: 'autor' | 'livro' | 'artigo' = 'autor';
-    let selectedConsultaTab: 'autor' | 'titulo' | 'conteudo' | 'ano' | 'nacionalidade' = 'autor';
+    let valorParaBusca: string = ""; // Valor digitado pelo usuário
+    let campoDeBusca: 'autor' | 'titulo' | 'conteudo' | 'ano' | 'nacionalidade' = 'autor'; // Campo selecionado
+    let resultado: { titulo: string; nome_autor: string; ano_publicacao: number; resumo: string; nacionalidade: string } | null = null;
+
+    async function buscar() {
+        try {
+            const response = await fetch(`http://127.0.0.1:8080/buscar?valor_para_busca=${encodeURIComponent(valorParaBusca)}&campo_de_busca=${encodeURIComponent(campoDeBusca)}`);
+            if (!response.ok) {
+                throw new Error("Erro ao buscar dados");
+            }
+            resultado = await response.json();
+        } catch (error) {
+            console.error("Erro ao buscar dados:", error);
+            resultado = null;
+        }
+    }
 </script>
 
 <main class="container">
@@ -54,38 +69,38 @@
                 {/if}
             </div>
         {:else}
+        <section>
             <div class="panel">
                 <h2>Consulta de Dados</h2>
-                <p>Escolha a categoria para visualizar os registros existentes.</p>
-                <div class="tabs">
-                    <button class="tab" on:click={() => selectedConsultaTab = 'autor'} class:selected={selectedConsultaTab === 'autor'}>
-                        Autor
-                    </button>
-                    <button class="tab" on:click={() => selectedConsultaTab = 'titulo'} class:selected={selectedConsultaTab === 'titulo'}>
-                        Título
-                    </button>
-                    <button class="tab" on:click={() => selectedConsultaTab = 'conteudo'} class:selected={selectedConsultaTab === 'conteudo'}>
-                        Conteúdo
-                    </button>
-                    <button class="tab" on:click={() => selectedConsultaTab = 'ano'} class:selected={selectedConsultaTab === 'ano'}>
-                        Ano de publicação
-                    </button>
-                    <button class="tab" on:click={() => selectedConsultaTab = 'nacionalidade'} class:selected={selectedConsultaTab === 'nacionalidade'}>
-                        Nacionalidade do autor
-                    </button>
+                <p>Escolha o campo e insira o valor para buscar registros existentes.</p>
+                <select bind:value={campoDeBusca} class="input-box">
+                    <option value="autor">Autor</option>
+                    <option value="titulo">Título</option>
+                    <option value="conteudo">Conteúdo</option>
+                    <option value="ano">Ano de Publicação</option>
+                    <option value="nacionalidade">Nacionalidade</option>
+                </select>
+                <div class="input-group">
+                    <input
+                        type="text"
+                        placeholder="Digite o valor para busca"
+                        class="input-box"
+                        bind:value={valorParaBusca} />
+                    <button on:click={buscar} class="busca">Buscar</button>
                 </div>
-                {#if selectedConsultaTab === 'autor'}
-                    <input type="text" placeholder="Digite o nome do autor" class="input-box" />
-                {:else if selectedConsultaTab === 'titulo'}
-                    <input type="text" placeholder="Digite o título" class="input-box" />
-                {:else if selectedConsultaTab === 'conteudo'}
-                    <input type="text" placeholder="Digite o conteúdo" class="input-box" />
-                {:else if selectedConsultaTab === 'ano'}
-                    <input type="number" placeholder="Digite o ano de publicação" class="input-box" />
-                {:else if selectedConsultaTab === 'nacionalidade'}
-                    <input type="text" placeholder="Digite o país" class="input-box" />
-                {/if}
             </div>
+            <div class="panel">
+                {#if resultado}
+                    <h3>Resultado da Busca</h3>
+                    <p><strong>Título:</strong> {resultado.titulo}</p>
+                    <p><strong>Autor:</strong> {resultado.nome_autor}</p>
+                    <p><strong>Ano de Publicação:</strong> {resultado.ano_publicacao}</p>
+                    <p><strong>Resumo:</strong> {resultado.resumo}</p>
+                    <p><strong>Nacionalidade:</strong> {resultado.nacionalidade}</p>
+                {:else}
+                    <p>Nenhum resultado encontrado.</p>
+                {/if}
+        </section>
         {/if}
     </section>
 </main>
@@ -141,12 +156,13 @@
     }
 
     .panel {
-        padding: 20px;
+        padding: 40px;
         border: 1px solid #ccc;
         border-radius: 10px;
         width: 100%;
-        max-width: 600px;
+        max-width: 1200px;
         text-align: center;
+        margin: 20px auto;
     }
 
     /* Make the panel bigger for Inserção */
@@ -173,5 +189,44 @@
 
     .bold {
         color:dimgrey;
+    }
+
+    /* Estilo para o botão "Buscar Autor" */
+    button.busca {
+        background-color: #ffcc00; /* Cor de fundo amarela escuro*/
+        color: black; /* Cor do texto */
+        border: none; /* Remove bordas */
+        padding: 10px 20px; /* Espaçamento interno */
+        font-size: 16px; /* Tamanho da fonte */
+        border-radius: 5px; /* Bordas arredondadas */
+        cursor: pointer; /* Cursor de ponteiro ao passar o mouse */
+        transition: background-color 0.3s ease, transform 0.2s ease; /* Transições suaves */
+    }
+
+    button.busca:hover {
+        background-color: #0056b3; /* Cor de fundo mais escura ao passar o mouse */
+        transform: scale(1.05); /* Leve aumento no tamanho */
+    }
+
+    button.busca:active {
+        background-color: #003f7f; /* Cor de fundo ainda mais escura ao clicar */
+        transform: scale(0.95); /* Leve redução no tamanho ao clicar */
+    }
+
+    /* Estilo para o contêiner do input e botão */
+    .input-group {
+        display: flex; /* Usa Flexbox para alinhar os itens */
+        align-items: center; /* Alinha verticalmente o input e o botão */
+        gap: 10px; /* Espaçamento entre o input e o botão */
+        justify-content: center; /* Centraliza o grupo horizontalmente */
+        margin-top: 10px; /* Espaçamento acima do grupo */
+    }
+
+    .input-group .input-box {
+        flex: 1; /* Faz o input ocupar o espaço restante */
+    }
+
+    .input-group .busca {
+        flex-shrink: 0; /* Impede que o botão encolha */
     }
 </style>
