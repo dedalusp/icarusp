@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Dashboard from './routes/dashboard.svelte';
+  import Dashboard from './lib/dashboard.svelte';
 </script>
 
 <main>
