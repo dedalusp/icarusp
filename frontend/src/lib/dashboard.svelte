@@ -69,15 +69,16 @@
 </script>
 
 <main class="container">
-    <nav class="tabs">
-        <button class="tab" on:click={() => selectedTab = 'insercao'} class:selected={selectedTab === 'insercao'}>
-            Inserção
-        </button>
-        <button class="tab" on:click={() => selectedTab = 'consulta'} class:selected={selectedTab === 'consulta'}>
-            Consulta
-        </button>
-    </nav>
-    
+    <div class="tabs-bar">
+        <nav class="tabs">
+            <button class="tab" on:click={() => selectedTab = 'insercao'} class:selected={selectedTab === 'insercao'}>
+                Inserção
+            </button>
+            <button class="tab" on:click={() => selectedTab = 'consulta'} class:selected={selectedTab === 'consulta'}>
+                Consulta
+            </button>
+        </nav>
+    </div>
     <section>
         {#if selectedTab === 'insercao'}
             <div class="panel insercao">
@@ -163,23 +164,32 @@
         padding: 20px;
     }
 
+    .tabs-bar {
+        width: 100%;
+        background: #e0e0e0;
+    }
+
     /* Style for tabs inside the <nav> */
     .tabs {
         display: flex;
-        gap: 10px;
-        margin-bottom: 20px;
     }
     .tabs > .tab {
         padding: 10px 20px;
         border: none;
-        background: lightgray;
+        background: transparent;
         cursor: pointer;
         font-size: 16px;
-        border-radius: 5px;
+        color: #222;
+        transition: background 0.2s, color 0.2s;
     }
-    .tabs > .tab.selected {
-        background: darkgray;
-        color: white;
+
+    .tabs > .tab:focus {
+        outline: none;
+        box-shadow: none;
+    }
+
+    .tabs > .tab:hover {
+        color:rgb(255, 123, 0);
     }
 
     /* Style for tabs inside the panels */
@@ -187,6 +197,7 @@
         display: flex;
         gap: 10px;
         margin-top: 10px;
+        justify-content: center; /* Centraliza as tabs horizontalmente */
     }
     .panel .tabs .tab {
         padding: 10px;
@@ -229,6 +240,8 @@
         border: 1px solid #ccc;
         border-radius: 5px;
         font-size: 16px;
+        background: #fff;
+        color: #222;
     }
 
     .input-box:focus {
