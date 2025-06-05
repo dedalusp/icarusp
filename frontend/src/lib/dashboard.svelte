@@ -1,22 +1,17 @@
 <script lang="ts">
     let selectedTab: 'insercao' | 'consulta' = 'insercao';
-    let selectedInsercaoTab: 'autor' | 'livro' | 'artigo' = 'autor';
+    let selectedInsercaoTab: 'autor' | 'publicacao' = 'autor';
     let valorParaBusca: string = ""; // Valor digitado pelo usuário
-    let campoDeBusca: 'autor' | 'titulo' | 'conteudo' | 'ano' | 'nacionalidade' = 'autor'; // Campo selecionado
+    let campoDeBusca: 'autor' | 'titulo' = 'autor'; // Campo selecionado
     let resultado: { titulo: string; nome_autor: string; ano_publicacao: number; resumo: string; nacionalidade: string } | null = null;
 
-    let nome = "";
+    let autor = "";
     let anoNascimento: number | null = null;
     let pais = "";
-    let isbn = "";
     let titulo = "";
-    let autor = "";
     let anoPublicacao: number | null = null;
     let resumo = "";
-    let edicoes: number | null = null;
-    let doi = "";
-    let abstractText = "";
-    let bibliografia = "";
+    let prompt = "";
 
     async function buscar() {
         try {
@@ -33,18 +28,12 @@
 
     async function enviarDados() {
         const dados = {
-            nome,
+            autor,
             ano_nascimento: anoNascimento,
             pais,
-            isbn,
             titulo,
-            autor,
             ano_publicacao: anoPublicacao,
             resumo,
-            edicoes,
-            doi,
-            abstract_text: abstractText,
-            bibliografia,
         };
 
         try {
@@ -83,39 +72,28 @@
         {#if selectedTab === 'insercao'}
             <div class="panel insercao">
                 <h2>Inserção de Dados</h2>
-                <p>Escolha entre adicionar um novo Autor, Livro ou Artigo.</p>
+                <p>Escolha entre adicionar um novo Autor ou Publicacao.</p>
                 <div class="tabs">
                     <button class="tab" on:click={() => selectedInsercaoTab = 'autor'} class:selected={selectedInsercaoTab === 'autor'}>
                         Novo Autor
                     </button>
-                    <button class="tab" on:click={() => selectedInsercaoTab = 'livro'} class:selected={selectedInsercaoTab === 'livro'}>
-                        Novo Livro
-                    </button>
-                    <button class="tab" on:click={() => selectedInsercaoTab = 'artigo'} class:selected={selectedInsercaoTab === 'artigo'}>
-                        Novo Artigo
+                    <button class="tab" on:click={() => selectedInsercaoTab = 'publicacao'} class:selected={selectedInsercaoTab === 'publicacao'}>
+                        Novo Publicacao
                     </button>
                 </div>
                 {#if selectedInsercaoTab === 'autor'}
                     <p class="bold">Insira os dados do novo autor:</p>
-                    <input type="text" placeholder="Nome" class="input-box" bind:value={nome} />
+                    <input type="text" placeholder="Nome" class="input-box" bind:value={autor} />
                     <input type="number" placeholder="Ano de Nascimento" class="input-box" bind:value={anoNascimento} />
                     <input type="text" placeholder="País de Nascimento" class="input-box" bind:value={pais} />
-                {:else if selectedInsercaoTab === 'livro'}
+                    <button on:click={buscaAutor} class="busca">Buscar Autor</button>
+                {:else if selectedInsercaoTab === 'publicacao'}
                     <p class="bold">Insira os dados do novo livro:</p>
-                    <input type="text" placeholder="ISBN" class="input-box" bind:value={isbn} />
                     <input type="text" placeholder="Título" class="input-box" bind:value={titulo} />
                     <input type="text" placeholder="Autor" class="input-box" bind:value={autor} />
                     <input type="number" placeholder="Ano de Publicação" class="input-box" bind:value={anoPublicacao} />
                     <textarea placeholder="Resumo de Conteúdo" class="input-box content-box" bind:value={resumo}></textarea>
-                    <input type="number" placeholder="Número de Edições" class="input-box" bind:value={edicoes} />
-                {:else if selectedInsercaoTab === 'artigo'}
-                    <p class="bold">Insira os dados do novo artigo:</p>
-                    <input type="text" placeholder="DOI" class="input-box" bind:value={doi} />
-                    <input type="text" placeholder="Título" class="input-box" bind:value={titulo} />
-                    <input type="text" placeholder="Autor" class="input-box" bind:value={autor} />
-                    <input type="number" placeholder="Ano de Publicação" class="input-box" bind:value={anoPublicacao} />
-                    <textarea placeholder="Abstract" class="input-box content-box" bind:value={abstractText}></textarea>
-                    <textarea placeholder="Bibliografia" class="input-box content-box" bind:value={bibliografia}></textarea>
+                    <button on:click={buscaPublicacao} class="busca">Buscar Publicacao</button>
                 {/if}
                 <button on:click={enviarDados} class="busca">Enviar</button>
             </div>
