@@ -5,30 +5,42 @@ use anyhow::Result;
 pub async fn insert_autor(conn: &Connection, autor: &Autor) -> Result<i64> {
     let stmt = conn.prepare(
         "INSERT INTO Autores (nome, ano_nascimento, pais) VALUES (?,?,?) RETURNING id;"
-    ).await?;
+    ).await.map_err(|e| anyhow::anyhow!("Failed to prepare statement for inserting Autor: {}", e))?;
+
     let mut rows = stmt.query(&[
         &autor.nome,
         &autor.ano_nascimento,
         &autor.pais,
-    ]).await?;
-    let row = rows.next().await?.ok_or(anyhow::anyhow!("Failed to get inserted author ID"))?;
+    ]).await.map_err(|e| anyhow::anyhow!("Failed to execute query for inserting Autor: {}", e))?;
+
+    let row = rows.next().await?
+        .ok_or_else(|| anyhow::anyhow!("Failed to retrieve inserted Autor ID"))?;
+
     Ok(row.get(0)?)
 }
 
 /// Inserts a Publicacao into the Publicacoes table and returns its generated ID.
 pub async fn insert_publicacao(conn: &Connection, publicacao: &Publicacao) -> Result<i64> {
-    let embedding_json_str = serde_json::to_string(&publicacao.embedding)?;
+    let embedding_json_str = serde_json::to_string(&publicacao.embedding)
+        .map_err(|e| anyhow::anyhow!("Failed to serialize embedding to JSON: {}", e))?;
 
     let stmt = format!(
         "INSERT INTO Publicacoes (titulo, ano_publicacao, resumo, embedding) VALUES (?,?,?, vector(?)) RETURNING id;"
     );
-    let mut rows = stmt.query(&[
-        &publicacao.titulo,
-        &publicacao.ano_publicacao,
-        &publicacao.resumo,
-        &embedding_json_str,
-    ]).await?;
-    let row = rows.next().await?.ok_or(anyhow::anyhow!("Failed to get inserted publication ID"))?;
+
+    let mut rows = conn.prepare(&stmt).await
+        .map_err(|e| anyhow::anyhow!("Failed to prepare statement for inserting Publicacao: {}", e))?
+        .query(&[
+            &publicacao.titulo,
+            &publicacao.ano_publicacao,
+            &publicacao.resumo,
+            &embedding_json_str,
+        ]).await
+        .map_err(|e| anyhow::anyhow!("Failed to execute query for inserting Publicacao: {}", e))?;
+
+    let row = rows.next().await?
+        .ok_or_else(|| anyhow::anyhow!("Failed to retrieve inserted Publicacao ID"))?;
+
     Ok(row.get(0)?)
 }
 

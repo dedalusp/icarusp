@@ -1,76 +1,96 @@
 use limbo::{Connection};
 use anyhow::Result;
+use serde::Serialize; // Import Serialize for JSON serialization
 use crate::embedding::compute_embedding; // Import the compute_embedding function
 use crate::classes::Publicacao; // Import the Publicacao struct
 
-/// Retrieves an Autor by name.
-pub async fn get_autor_by_name(conn: &Connection, name: &str) -> Result<Option<(i64, Autor)>> {
-    let mut stmt = conn.prepare(
-        "SELECT id, nome, ano_nascimento, pais FROM Autores WHERE nome =?;"
-    ).await?;
-    let mut rows = stmt.query(&[&name]).await?;
-    if let Some(row) = rows.next().await? {
-        let id: i64 = row.get(0)?;
-        let autor = Autor::try_from(row)?;
-        Ok(Some((id, autor)))
-    } else {
-        Ok(None)
-    }
+#[derive(Serialize)] // Derive Serialize for JSON serialization
+pub struct AutorOutput {
+    pub nome: String,
+    pub ano_nascimento: u32,
+    pub pais: String,
 }
 
-/// Retrieves a Publicacao by title.
-pub async fn get_publicacao_by_title(conn: &Connection, title: &str) -> Result<Option<(i64, Publicacao)>> {
-    let mut stmt = conn.prepare(
-        "SELECT id, titulo, ano_publicacao, resumo, embedding FROM Publicacoes WHERE titulo =?;"
-    ).await?;
-    let mut rows = stmt.query(&[&title]).await?;
-    if let Some(row) = rows.next().await? {
-        let id: i64 = row.get(0)?;
-        let publicacao = Publicacao::try_from(row)?;
-        Ok(Some((id, publicacao)))
-    } else {
-        Ok(None)
-    }
+#[derive(Serialize)] // Derive Serialize for JSON serialization
+pub struct PublicacaoOutput {
+    pub titulo: String,
+    pub ano_publicacao: u32,
+    pub resumo: String,
 }
 
-/// Retrieves all Publicacoes written by a specific author name.
-pub async fn get_works_by_autor_name(conn: &Connection, autor_name: &str) -> Result<(Vec<Publicacao>, Vec<Paper>)> {
-    // Query for Publicacoes by author
-    let mut publicacoes_stmt = conn.prepare(
-        "SELECT P.id, P.titulo, P.ano_publicacao, P.resumo, P.embedding
+#[derive(Serialize)] // Derive Serialize for JSON serialization
+pub struct PublicacaoVetorial {
+    pub publicacao: PublicacaoOutput,
+    pub distance: f64,
+}
+
+/// Retrieves an Autor by a partial name match.
+pub async fn get_autor_by_name(conn: &Connection, name: &str) -> Result<Vec<AutorOutput>> {
+    let mut stmt = conn.prepare(
+        "SELECT nome, ano_nascimento, pais FROM Autores WHERE nome LIKE ?;"
+    ).await?;
+    let mut rows = stmt.query(&[&format!("%{}%", name)]).await?;
+
+    let mut results = Vec::new();
+    while let Some(row) = rows.next().await? {
+        results.push(AutorOutput {
+            nome: row.get(0)?,
+            ano_nascimento: row.get(1)?,
+            pais: row.get(2)?,
+        });
+    }
+    Ok(results)
+}
+
+/// Retrieves a Publicacao by a partial title match.
+pub async fn get_publicacao_by_title(conn: &Connection, title: &str) -> Result<Vec<PublicacaoOutput>> {
+    let mut stmt = conn.prepare(
+        "SELECT titulo, ano_publicacao, resumo FROM Publicacoes WHERE titulo LIKE ?;"
+    ).await?;
+    let mut rows = stmt.query(&[&format!("%{}%", title)]).await?;
+
+    let mut results = Vec::new();
+    while let Some(row) = rows.next().await? {
+        results.push(PublicacaoOutput {
+            titulo: row.get(0)?,
+            ano_publicacao: row.get(1)?,
+            resumo: row.get(2)?,
+        });
+    }
+    Ok(results)
+}
+
+/// Retrieves all Publicacoes written by a specific author name (partial match).
+pub async fn get_works_by_autor_name(conn: &Connection, autor_name: &str) -> Result<Vec<PublicacaoOutput>> {
+    let mut stmt = conn.prepare(
+        "SELECT P.titulo, P.ano_publicacao, P.resumo
          FROM Publicacoes P
          JOIN Escreveu_Publicacao EP ON P.id = EP.publicacao_id
          JOIN Autores A ON EP.autor_id = A.id
-         WHERE A.nome =?;"
+         WHERE A.nome LIKE ?;"
     ).await?;
-    let mut publicacoes = Vec::new();
-    let mut rows = publicacoes_stmt.query(&[&autor_name]).await?;
+    let mut rows = stmt.query(&[&format!("%{}%", autor_name)]).await?;
+
+    let mut results = Vec::new();
     while let Some(row) = rows.next().await? {
-        publicacoes.push(Publicacao::try_from(row)?);
+        results.push(PublicacaoOutput {
+            titulo: row.get(0)?,
+            ano_publicacao: row.get(1)?,
+            resumo: row.get(2)?,
+        });
     }
-
-    Ok((publicacoes, Vec::new()))
-}
-
-/// Parses a vector string in the format "vector('[f1,f2,...]')" into a Vec<f32>.
-pub fn parse_vector_string(input: &str) -> Result<Vec<f32>> {
-    if !input.starts_with("vector('") || !input.ends_with("')") {
-        return Err(anyhow::anyhow!("Invalid vector string format: must be vector('[f1,f2,...]')"));
-    }
-    let json_str = &input[8..input.len() - 2]; // Extract "[f1,f2,...]"
-    let vec: Vec<f32> = serde_json::from_str(json_str)?;
-    Ok(vec)
+    Ok(results)
 }
 
 /// Performs a similarity search for Publicacoes using vector_distance_cos.
 /// Returns publications ordered by cosine distance (lower is more similar).
-pub async fn query_publicacoes_by_embedding(conn: &Connection, prompt: &str, limit: u32) -> Result<Vec<(Publicacao, f64)>> {
+pub async fn query_publicacoes_by_embedding(conn: &Connection, prompt: &str, limit: u32) -> Result<Vec<PublicacaoVetorial>> {
     // Compute the embedding for the query text
     let query_embedding = compute_embedding(prompt)?;
     let embedding_json_str = serde_json::to_string(&query_embedding)?;
 
     let stmt = conn.prepare(
-        "SELECT id, titulo, ano_publicacao, resumo, embedding,
+        "SELECT titulo, ano_publicacao, resumo,
                 vector_distance_cos(embedding, vector(?)) AS distance
          FROM Publicacoes
          ORDER BY distance ASC
@@ -80,9 +100,14 @@ pub async fn query_publicacoes_by_embedding(conn: &Connection, prompt: &str, lim
 
     let mut results = Vec::new();
     while let Some(row) = rows.next().await? {
-        let publicacao = Publicacao::try_from(row.clone())?; // Clone row to allow multiple gets
-        let distance: f64 = row.get(5)?; // Assuming distance is the 6th column (index 5)
-        results.push((publicacao, distance));
+        results.push(PublicacaoVetorial {
+            publicacao: PublicacaoOutput {
+                titulo: row.get(0)?,
+                ano_publicacao: row.get(1)?,
+                resumo: row.get(2)?,
+            },
+            distance: row.get(3)?, // Assuming distance is the 5th column (index 4)
+        });
     }
     Ok(results)
 }
