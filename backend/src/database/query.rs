@@ -1,8 +1,9 @@
 use limbo::{Connection};
 use anyhow::Result;
 use serde::Serialize; // Import Serialize for JSON serialization
+
+
 use crate::embedding::compute_embedding; // Import the compute_embedding function
-use crate::classes::Publicacao; // Import the Publicacao struct
 
 #[derive(Serialize)] // Derive Serialize for JSON serialization
 pub struct AutorOutput {
@@ -96,7 +97,7 @@ pub async fn query_publicacoes_by_embedding(conn: &Connection, prompt: &str, lim
          ORDER BY distance ASC
          LIMIT ?;"
     ).await?;
-    let mut rows = stmt.query(&[&embedding_json_str, &limit]).await?;
+    let mut rows = stmt.query(&[&embedding_json_str, &limit.to_string()]).await?;
 
     let mut results = Vec::new();
     while let Some(row) = rows.next().await? {

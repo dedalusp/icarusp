@@ -1,7 +1,9 @@
 use std::fmt;
 use anyhow::Result;
 use limbo::Connection;
-use crate::database::insertion::{insert_autor, insert_publicacao_with_author};
+
+use crate::database::insertion::{insert_autor, insert_publication_with_author};
+use crate::embedding::compute_embedding;
 
 /// Autor struct
 pub struct Autor {
@@ -55,7 +57,7 @@ pub struct Publicacao {
 
 impl Publicacao {
     pub fn new(titulo: &str, ano_publicacao: u32, resumo: &str) -> Result<Self> {
-        let embedding = crate::embedding::compute_embedding(resumo)?; // Generate embedding
+        let embedding = compute_embedding(resumo)?; // Generate embedding
         Ok(Publicacao {
             titulo: titulo.to_string(),
             ano_publicacao,
@@ -82,7 +84,7 @@ impl Publicacao {
 
     /// Inserts the Publicacao into the Publicacoes table and links it to an Autor by name.
     pub async fn insert(&self, conn: &Connection, autor_nome: &str) -> Result<(i64, i64)> {
-        insert_publicacao_with_author(conn, self, autor_nome).await
+        insert_publication_with_author(conn, self, autor_nome).await
     }
 }
 
@@ -103,20 +105,36 @@ impl fmt::Display for Publicacao {
 // `insert` for both `Autor` and `Publicacao`, and we can
 // use the `Entidade` enum to handle both types generically.
 
-#[tokio::main]
-async fn main() -> Result<()> {
-    let conn = crate::database::initialization::initialize_db_connection("database.db").await?;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    let autor = Autor::new("Machado de Assis", 1839, "Brasil");
-    let autor_id = autor.insert(&conn).await?;
-    println!("Inserted Autor with ID: {}", autor_id);
+    #[test]
+    fn test_autor_creation() {
+        let autor = Autor::new("Machado de Assis", 1839, "Brasil");
+        assert_eq!(autor.get_nome(), "Machado de Assis");
+        assert_eq!(autor.get_ano_nascimento(), 1839);
+        assert_eq!(autor.get_pais(), "Brasil");
+    }
 
-    let publicacao = Publicacao::new("Dom Casmurro", 1899, "Um romance sobre ciúmes e traição.")?;
-    let (autor_id, publicacao_id) = publicacao.insert(&conn, "Machado de Assis").await?;
-    println!(
-        "Inserted Publicacao with ID: {} and linked to Autor ID: {}",
-        publicacao_id, autor_id
-    );
+    #[test]
+    fn test_publicacao_creation() {
+        // Mock the embedding function if needed, or adjust as per your project setup
+        // Here, we assume compute_embedding returns Ok(vec![0.0; 512]) for testing
+        use std::sync::Once;
+        static INIT: Once = Once::new();
+        INIT.call_once(|| {
+            // Patch the embedding function for tests if needed
+        });
 
-    Ok(())
+        let publicacao = Publicacao::new(
+            "Dom Casmurro",
+            1899,
+            "Um clássico da literatura brasileira.",
+        ).unwrap();
+        assert_eq!(publicacao.get_titulo(), "Dom Casmurro");
+        assert_eq!(publicacao.get_ano_publicacao(), 1899);
+        assert_eq!(publicacao.get_resumo(), "Um clássico da literatura brasileira.");
+        assert_eq!(publicacao.get_embedding().len(), 512);
+    }
 }

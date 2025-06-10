@@ -1,6 +1,8 @@
 use limbo::{Connection, params};
 use anyhow::Result;
 
+use crate::classes::{Autor, Publicacao};
+
 /// Inserts an Autor into the Autores table and returns its generated ID.
 pub async fn insert_autor(conn: &Connection, autor: &Autor) -> Result<i64> {
     let stmt = conn.prepare(
@@ -8,9 +10,9 @@ pub async fn insert_autor(conn: &Connection, autor: &Autor) -> Result<i64> {
     ).await.map_err(|e| anyhow::anyhow!("Failed to prepare statement for inserting Autor: {}", e))?;
 
     let mut rows = stmt.query(&[
-        &autor.nome,
-        &autor.ano_nascimento,
-        &autor.pais,
+        autor.get_nome(),
+        &autor.get_ano_nascimento().to_string(),
+        autor.get_pais(), 
     ]).await.map_err(|e| anyhow::anyhow!("Failed to execute query for inserting Autor: {}", e))?;
 
     let row = rows.next().await?
@@ -32,7 +34,7 @@ pub async fn insert_publicacao(conn: &Connection, publicacao: &Publicacao) -> Re
         .map_err(|e| anyhow::anyhow!("Failed to prepare statement for inserting Publicacao: {}", e))?
         .query(&[
             &publicacao.titulo,
-            &publicacao.ano_publicacao,
+            &publicacao.ano_publicacao.to_string(),
             &publicacao.resumo,
             &embedding_json_str,
         ]).await
