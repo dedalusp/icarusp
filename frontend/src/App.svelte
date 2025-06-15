@@ -17,7 +17,7 @@
   main {
     text-align: center;
     background: #fff;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: sans-serif, Helvetica;
   }
 
   .header-bar {
