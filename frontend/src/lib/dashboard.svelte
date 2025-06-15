@@ -1,60 +1,86 @@
 <script lang="ts">
-    let selectedTab: 'insercao' | 'consulta' = 'insercao';
-    let selectedInsercaoTab: 'autor' | 'publicacao' = 'autor';
-    let valorParaBusca: string = ""; // Valor digitado pelo usuário
-    let campoDeBusca: 'autor' | 'titulo' = 'autor'; // Campo selecionado
-    let resultado: { titulo: string; nome_autor: string; ano_publicacao: number; resumo: string; nacionalidade: string } | null = null;
+// filepath: /home/miki/IME/Intro a DS/icarusp/frontend/src/lib/dashboard.svelte
 
-    let autor = "";
-    let anoNascimento: number | null = null;
-    let pais = "";
-    let titulo = "";
-    let anoPublicacao: number | null = null;
-    let resumo = "";
-    let prompt = "";
+const BASE = "http://127.0.0.1:8080";
 
-    async function buscar() {
-        try {
-            const response = await fetch(`http://127.0.0.1:8080/buscar?valor_para_busca=${encodeURIComponent(valorParaBusca)}&campo_de_busca=${encodeURIComponent(campoDeBusca)}`);
-            if (!response.ok) {
-                throw new Error("Erro ao buscar dados");
-            }
-            resultado = await response.json();
-        } catch (error) {
-            console.error("Erro ao buscar dados:", error);
-            resultado = null;
-        }
-    }
+// Inserção de autor
+let nomeAutor = "";
+let anoNascimento: number | null = null;
+let pais = "";
 
-    async function enviarDados() {
-        const dados = {
-            autor,
+// Inserção de publicação
+let titulo = "";
+let anoPublicacao: number | null = null;
+let resumo = "";
+let autorPub = "";
+
+// Buscas
+let resumoBusca = "";
+let tituloBusca = "";
+let nomeBusca = "";
+
+let resultado: any = null;
+let mensagem = "";
+
+let selectedTab: 'insercao' | 'consulta' = 'insercao';
+let selectedInsercaoTab: 'autor' | 'publicacao' = 'autor';
+let selectedConsultaTab: 'vetorial' | 'titulo' | 'publicacoesAutor' | 'autor' = 'vetorial';
+
+// Funções para interagir com o backend
+async function inserirAutor() {
+    mensagem = "";
+    const res = await fetch(`${BASE}/inserirAutor`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            nome: nomeAutor,
             ano_nascimento: anoNascimento,
-            pais,
+            pais
+        })
+    });
+    const data = await res.json();
+    mensagem = data.id > 0 ? "Autor inserido com sucesso!" : "Erro ao inserir autor.";
+}
+
+async function inserirPublicacao() {
+    mensagem = "";
+    const res = await fetch(`${BASE}/inserirPublicacao`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
             titulo,
             ano_publicacao: anoPublicacao,
             resumo,
-        };
+            autor: autorPub
+        })
+    });
+    const data = await res.json();
+    mensagem = data.publicacao_id > 0 ? "Publicação inserida com sucesso!" : "Erro ao inserir publicação.";
+}
 
-        try {
-            const response = await fetch("http://127.0.0.1:8080/inserir", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(dados),
-            });
+async function buscaVetorial() {
+    mensagem = "";
+    const res = await fetch(`${BASE}/buscaVetorial?resumo=${encodeURIComponent(resumoBusca)}`);
+    resultado = await res.json();
+}
 
-            if (!response.ok) {
-                throw new Error("Erro ao enviar dados");
-            }
+async function buscaPorPublicacoes() {
+    mensagem = "";
+    const res = await fetch(`${BASE}/buscaPorPublicacoes?titulo=${encodeURIComponent(tituloBusca)}`);
+    resultado = await res.json();
+}
 
-            const resultado = await response.text();
-            console.log("Resposta do backend:", resultado);
-        } catch (error) {
-            console.error("Erro ao enviar dados:", error);
-        }
-    }
+async function buscaPorPublicacoesDoAutor() {
+    mensagem = "";
+    const res = await fetch(`${BASE}/buscaPorPublicacoesDoAutor?nome=${encodeURIComponent(nomeBusca)}`);
+    resultado = await res.json();
+}
+
+async function buscaPorAutor() {
+    mensagem = "";
+    const res = await fetch(`${BASE}/buscaPorAutor?nome=${encodeURIComponent(nomeBusca)}`);
+    resultado = await res.json();
+}
 </script>
 
 <main class="container">
@@ -72,64 +98,69 @@
         {#if selectedTab === 'insercao'}
             <div class="panel insercao">
                 <h2>Inserção de Dados</h2>
-                <p>Escolha entre adicionar um novo Autor ou Publicacao.</p>
                 <div class="tabs">
                     <button class="tab" on:click={() => selectedInsercaoTab = 'autor'} class:selected={selectedInsercaoTab === 'autor'}>
                         Novo Autor
                     </button>
                     <button class="tab" on:click={() => selectedInsercaoTab = 'publicacao'} class:selected={selectedInsercaoTab === 'publicacao'}>
-                        Novo Publicacao
+                        Nova Publicação
                     </button>
                 </div>
                 {#if selectedInsercaoTab === 'autor'}
                     <p class="bold">Insira os dados do novo autor:</p>
-                    <input type="text" placeholder="Nome" class="input-box" bind:value={autor} />
+                    <input type="text" placeholder="Nome" class="input-box" bind:value={nomeAutor} />
                     <input type="number" placeholder="Ano de Nascimento" class="input-box" bind:value={anoNascimento} />
                     <input type="text" placeholder="País de Nascimento" class="input-box" bind:value={pais} />
-                    <button on:click={buscaAutor} class="busca">Buscar Autor</button>
-                {:else if selectedInsercaoTab === 'publicacao'}
-                    <p class="bold">Insira os dados do novo livro:</p>
+                    <button on:click={inserirAutor} class="busca">Inserir Autor</button>
+                {:else}
+                    <p class="bold">Insira os dados da nova publicação:</p>
                     <input type="text" placeholder="Título" class="input-box" bind:value={titulo} />
-                    <input type="text" placeholder="Autor" class="input-box" bind:value={autor} />
                     <input type="number" placeholder="Ano de Publicação" class="input-box" bind:value={anoPublicacao} />
+                    <input type="text" placeholder="Autor" class="input-box" bind:value={autorPub} />
                     <textarea placeholder="Resumo de Conteúdo" class="input-box content-box" bind:value={resumo}></textarea>
-                    <button on:click={buscaPublicacao} class="busca">Buscar Publicacao</button>
+                    <button on:click={inserirPublicacao} class="busca">Inserir Publicação</button>
                 {/if}
-                <button on:click={enviarDados} class="busca">Enviar</button>
             </div>
         {:else}
-        <section>
             <div class="panel">
-                <h2>Consulta de Dados</h2>
-                <p>Escolha o campo e insira o valor para buscar registros existentes.</p>
-                <select bind:value={campoDeBusca} class="input-box">
-                    <option value="autor">Autor</option>
-                    <option value="titulo">Título</option>
-                    <option value="conteudo">Conteúdo</option>
-                    <option value="ano">Ano de Publicação</option>
-                    <option value="nacionalidade">Nacionalidade</option>
-                </select>
-                <div class="input-group">
-                    <input
-                        type="text"
-                        placeholder="Digite o valor para busca"
-                        class="input-box"
-                        bind:value={valorParaBusca} />
-                    <button on:click={buscar} class="busca">Buscar</button>
+                <h2>Consultas</h2>
+                <div class="tabs" style="justify-content: center;">
+                    <button class="tab" on:click={() => selectedConsultaTab = 'vetorial'} class:selected={selectedConsultaTab === 'vetorial'}>
+                        Por Resumo
+                    </button>
+                    <button class="tab" on:click={() => selectedConsultaTab = 'titulo'} class:selected={selectedConsultaTab === 'titulo'}>
+                        Por Título
+                    </button>
+                    <button class="tab" on:click={() => selectedConsultaTab = 'publicacoesAutor'} class:selected={selectedConsultaTab === 'publicacoesAutor'}>
+                        Publicações do Autor
+                    </button>
+                    <button class="tab" on:click={() => selectedConsultaTab = 'autor'} class:selected={selectedConsultaTab === 'autor'}>
+                        Por Autor
+                    </button>
                 </div>
-            </div>
-            <div class="panel">
-                {#if resultado}
-                    <h3>Resultado da Busca</h3>
-                    <p><strong>Título:</strong> {resultado.titulo}</p>
-                    <p><strong>Autor:</strong> {resultado.nome_autor}</p>
-                    <p><strong>Ano de Publicação:</strong> {resultado.ano_publicacao}</p>
-                    <p><strong>Resumo:</strong> {resultado.resumo}</p>
-                    <p><strong>Nacionalidade:</strong> {resultado.nacionalidade}</p>
-                {:else}
-                    <p>Nenhum resultado encontrado.</p>
+                {#if selectedConsultaTab === 'vetorial'}
+                    <input type="text" placeholder="Resumo" class="input-box" bind:value={resumoBusca} />
+                    <button on:click={buscaVetorial} class="busca">Buscar</button>
+                {:else if selectedConsultaTab === 'titulo'}
+                    <input type="text" placeholder="Título" class="input-box" bind:value={tituloBusca} />
+                    <button on:click={buscaPorPublicacoes} class="busca">Buscar</button>
+                {:else if selectedConsultaTab === 'publicacoesAutor'}
+                    <input type="text" placeholder="Nome do Autor" class="input-box" bind:value={nomeBusca} />
+                    <button on:click={buscaPorPublicacoesDoAutor} class="busca">Buscar</button>
+                {:else if selectedConsultaTab === 'autor'}
+                    <input type="text" placeholder="Nome do Autor" class="input-box" bind:value={nomeBusca} />
+                    <button on:click={buscaPorAutor} class="busca">Buscar</button>
                 {/if}
-        </section>
+            </div>
+        {/if}
+        {#if mensagem}
+            <div class="mensagem">{mensagem}</div>
+        {/if}
+        {#if resultado}
+            <div class="panel resultado">
+                <h3>Resultado</h3>
+                <pre>{JSON.stringify(resultado, null, 2)}</pre>
+            </div>
         {/if}
     </section>
 </main>
@@ -190,8 +221,9 @@
     }
     
     .panel .tabs .tab.selected {
-        background: #0056b3; /* Change background color when selected */
+        background: #0056b3;
         color: white;
+        font-weight: bold;
     }
 
     .panel {
@@ -269,5 +301,21 @@
 
     .input-group .busca {
         flex-shrink: 0; /* Impede que o botão encolha */
+    }
+
+    .mensagem {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background: #f9f9f9;
+        color: #333;
+        font-weight: bold;
+    }
+
+    .resultado {
+        text-align: left;
+        white-space: pre-wrap; /* Mantém quebras de linha */
+        word-wrap: break-word; /* Quebra palavras longas */
     }
 </style>
