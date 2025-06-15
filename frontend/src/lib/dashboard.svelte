@@ -96,9 +96,9 @@ async function buscaPorAutor() {
     </div>
     <section>
         {#if selectedTab === 'insercao'}
-            <div class="panel insercao">
+            <div class="panel">
                 <h2>Inserção de Dados</h2>
-                <div class="tabs">
+                <div class="tabs" style="justify-content: flex-start;">
                     <button class="tab" on:click={() => selectedInsercaoTab = 'autor'} class:selected={selectedInsercaoTab === 'autor'}>
                         Novo Autor
                     </button>
@@ -108,23 +108,29 @@ async function buscaPorAutor() {
                 </div>
                 {#if selectedInsercaoTab === 'autor'}
                     <p class="bold">Insira os dados do novo autor:</p>
-                    <input type="text" placeholder="Nome" class="input-box" bind:value={nomeAutor} />
-                    <input type="number" placeholder="Ano de Nascimento" class="input-box" bind:value={anoNascimento} />
-                    <input type="text" placeholder="País de Nascimento" class="input-box" bind:value={pais} />
-                    <button on:click={inserirAutor} class="busca">Inserir Autor</button>
+                    <div class="boxes-group">
+                        <input type="text" placeholder="Nome" class="input-box" bind:value={nomeAutor} />
+                        <input type="number" placeholder="Ano de Nascimento" class="input-box" bind:value={anoNascimento} />
+                        <input type="text" placeholder="País de Nascimento" class="input-box" bind:value={pais} />
+                        <button on:click={inserirAutor} class="busca">Inserir Autor</button>
+                    </div>
                 {:else}
                     <p class="bold">Insira os dados da nova publicação:</p>
-                    <input type="text" placeholder="Título" class="input-box" bind:value={titulo} />
-                    <input type="number" placeholder="Ano de Publicação" class="input-box" bind:value={anoPublicacao} />
-                    <input type="text" placeholder="Autor" class="input-box" bind:value={autorPub} />
-                    <textarea placeholder="Resumo de Conteúdo" class="input-box content-box" bind:value={resumo}></textarea>
-                    <button on:click={inserirPublicacao} class="busca">Inserir Publicação</button>
+                    <div class="boxes-group">
+                        <input type="text" placeholder="Título" class="input-box" bind:value={titulo} />
+                        <input type="number" placeholder="Ano de Publicação" class="input-box" bind:value={anoPublicacao} />
+                        <input type="text" placeholder="Autor" class="input-box" bind:value={autorPub} />
+                        <button on:click={inserirPublicacao} class="busca">Inserir Publicação</button>
+                    </div>
+                    <div class="boxes-group">
+                        <textarea placeholder="Resumo de Conteúdo" class="input-box content-box" bind:value={resumo}></textarea>
+                    </div>
                 {/if}
             </div>
         {:else}
             <div class="panel">
                 <h2>Consultas</h2>
-                <div class="tabs" style="justify-content: center;">
+                <div class="tabs" style="justify-content: flex-start;">
                     <button class="tab" on:click={() => selectedConsultaTab = 'vetorial'} class:selected={selectedConsultaTab === 'vetorial'}>
                         Por Resumo
                     </button>
@@ -139,17 +145,27 @@ async function buscaPorAutor() {
                     </button>
                 </div>
                 {#if selectedConsultaTab === 'vetorial'}
-                    <input type="text" placeholder="Resumo" class="input-box" bind:value={resumoBusca} />
-                    <button on:click={buscaVetorial} class="busca">Buscar</button>
+                    <textarea
+                        placeholder="Resumo de Conteúdo"
+                        class="input-box consulta-content-box"
+                        bind:value={resumo}
+                    ></textarea>
+                    <button on:click={buscaVetorial} class="busca">Buscar</button>       
                 {:else if selectedConsultaTab === 'titulo'}
-                    <input type="text" placeholder="Título" class="input-box" bind:value={tituloBusca} />
-                    <button on:click={buscaPorPublicacoes} class="busca">Buscar</button>
+                    <div class="boxes-group">
+                        <input type="text" placeholder="Título" class="input-box" bind:value={tituloBusca} />
+                        <button on:click={buscaPorPublicacoes} class="busca">Buscar</button>
+                    </div>
                 {:else if selectedConsultaTab === 'publicacoesAutor'}
-                    <input type="text" placeholder="Nome do Autor" class="input-box" bind:value={nomeBusca} />
-                    <button on:click={buscaPorPublicacoesDoAutor} class="busca">Buscar</button>
+                    <div class="boxes-group">
+                        <input type="text" placeholder="Nome do Autor" class="input-box" bind:value={nomeBusca} />
+                        <button on:click={buscaPorPublicacoesDoAutor} class="busca">Buscar</button>
+                    </div>
                 {:else if selectedConsultaTab === 'autor'}
-                    <input type="text" placeholder="Nome do Autor" class="input-box" bind:value={nomeBusca} />
-                    <button on:click={buscaPorAutor} class="busca">Buscar</button>
+                    <div class="boxes-group">
+                        <input type="text" placeholder="Nome do Autor" class="input-box" bind:value={nomeBusca} />
+                        <button on:click={buscaPorAutor} class="busca">Buscar</button>
+                    </div>
                 {/if}
             </div>
         {/if}
@@ -169,18 +185,20 @@ async function buscaPorAutor() {
     .container {
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: flex-start; /* Alinha tudo à esquerda */
         padding: 20px;
     }
 
     .tabs-bar {
         width: 100%;
         background: #e0e0e0;
+        text-align: left; /* Alinha tabs-bar à esquerda */
     }
 
     /* Style for tabs inside the <nav> */
     .tabs {
         display: flex;
+        justify-content: flex-start; /* Alinha tabs à esquerda */
     }
     .tabs > .tab {
         padding: 10px 20px;
@@ -227,20 +245,22 @@ async function buscaPorAutor() {
     }
 
     .panel {
-        padding: 40px;
-        border: 1px solid #ccc;
-        border-radius: 10px;
+        padding: 40px 0;
         width: 100%;
         max-width: 1200px;
-        text-align: center;
+        text-align: left; /* Alinha texto à esquerda */
         margin: 20px auto;
+        border: none;
+        background: none;
+        box-shadow: none;
+        border-radius: 0;
     }
 
     /* Make the panel bigger for Inserção */
-    .panel.insercao {
-        max-width: 1000px; /* Increase the width */
-        padding: 39px; /* Add more padding */
-    }
+    /*.panel.insercao {
+        max-width: 1000px;
+        padding: 39px;
+    }*/
 
     .input-box {
         width: 100%;
@@ -287,7 +307,7 @@ async function buscaPorAutor() {
     }
 
     /* Estilo para o contêiner do input e botão */
-    .input-group {
+    .boxes-group {
         display: flex; /* Usa Flexbox para alinhar os itens */
         align-items: center; /* Alinha verticalmente o input e o botão */
         gap: 10px; /* Espaçamento entre o input e o botão */
@@ -295,11 +315,11 @@ async function buscaPorAutor() {
         margin-top: 10px; /* Espaçamento acima do grupo */
     }
 
-    .input-group .input-box {
+    .boxes-group .input-box {
         flex: 1; /* Faz o input ocupar o espaço restante */
     }
 
-    .input-group .busca {
+    .boxes-group .busca {
         flex-shrink: 0; /* Impede que o botão encolha */
     }
 
@@ -317,5 +337,23 @@ async function buscaPorAutor() {
         text-align: left;
         white-space: pre-wrap; /* Mantém quebras de linha */
         word-wrap: break-word; /* Quebra palavras longas */
+    }
+
+    .content-box {
+        min-height: 400px;   /* Altura mínima maior */
+        width: 100%;         /* Ocupa toda a largura disponível */
+        max-width: 1200px;    /* Limite opcional de largura */
+        resize: vertical;    /* Permite redimensionar verticalmente */
+        margin-top: 10px;
+        font-size: 16px;
+    }
+
+    .consulta-content-box {
+        min-height: 50px;
+        width: 100%;
+        max-width: 1200px;
+        resize: vertical;
+        margin-top: 10px;
+        font-size: 18px;
     }
 </style>
