@@ -60,26 +60,54 @@ async function inserirPublicacao() {
 
 async function buscaVetorial() {
     mensagem = "";
-    const res = await fetch(`${BASE}/buscaVetorial?resumo=${encodeURIComponent(resumoBusca)}`);
-    resultado = await res.json();
+    resultado = null;
+    try {
+        const res = await fetch(`${BASE}/buscaVetorial?resumo=${encodeURIComponent(resumoBusca)}`);
+        const data = await res.json();
+        resultado = data;
+        mensagem = (Array.isArray(data) && data.length === 0) ? "Nenhum resultado encontrado." : "";
+    } catch (e) {
+        mensagem = "Erro ao buscar.";
+    }
 }
 
 async function buscaPorPublicacoes() {
     mensagem = "";
-    const res = await fetch(`${BASE}/buscaPorPublicacoes?titulo=${encodeURIComponent(tituloBusca)}`);
-    resultado = await res.json();
+    resultado = null;
+    try {
+        const res = await fetch(`${BASE}/buscaPorPublicacoes?titulo=${encodeURIComponent(tituloBusca)}`);
+        const data = await res.json();
+        resultado = data;
+        mensagem = (Array.isArray(data) && data.length === 0) ? "Nenhum resultado encontrado." : "";
+    } catch (e) {
+        mensagem = "Erro ao buscar.";
+    }
 }
 
 async function buscaPorPublicacoesDoAutor() {
     mensagem = "";
-    const res = await fetch(`${BASE}/buscaPorPublicacoesDoAutor?nome=${encodeURIComponent(nomeBusca)}`);
-    resultado = await res.json();
+    resultado = null;
+    try {
+        const res = await fetch(`${BASE}/buscaPorPublicacoesDoAutor?nome=${encodeURIComponent(nomeBusca)}`);
+        const data = await res.json();
+        resultado = data;
+        mensagem = (Array.isArray(data) && data.length === 0) ? "Nenhum resultado encontrado." : "";
+    } catch (e) {
+        mensagem = "Erro ao buscar.";
+    }
 }
 
 async function buscaPorAutor() {
     mensagem = "";
-    const res = await fetch(`${BASE}/buscaPorAutor?nome=${encodeURIComponent(nomeBusca)}`);
-    resultado = await res.json();
+    resultado = null;
+    try {
+        const res = await fetch(`${BASE}/buscaPorAutor?nome=${encodeURIComponent(nomeBusca)}`);
+        const data = await res.json();
+        resultado = data;
+        mensagem = (Array.isArray(data) && data.length === 0) ? "Nenhum resultado encontrado." : "";
+    } catch (e) {
+        mensagem = "Erro ao buscar.";
+    }
 }
 </script>
 
@@ -175,7 +203,15 @@ async function buscaPorAutor() {
         {#if resultado}
             <div class="panel resultado">
                 <h3>Resultado</h3>
-                <pre>{JSON.stringify(resultado, null, 2)}</pre>
+                {#if Array.isArray(resultado)}
+                    {#each resultado as item, _}
+                        <div class="resultado-item">
+                            <pre>{JSON.stringify(item, null, 2)}</pre>
+                        </div>
+                    {/each}
+                {:else}
+                    <pre>{JSON.stringify(resultado, null, 2)}</pre>
+                {/if}
             </div>
         {/if}
     </section>
@@ -255,12 +291,6 @@ async function buscaPorAutor() {
         box-shadow: none;
         border-radius: 0;
     }
-
-    /* Make the panel bigger for Inserção */
-    /*.panel.insercao {
-        max-width: 1000px;
-        padding: 39px;
-    }*/
 
     .input-box {
         width: 100%;
@@ -355,5 +385,13 @@ async function buscaPorAutor() {
         resize: vertical;
         margin-top: 10px;
         font-size: 18px;
+    }
+
+    .resultado-item {
+        margin-bottom: 18px;
+        padding: 12px;
+        background: #f5f5f5;
+        border-radius: 6px;
+        border: 1px solid #e0e0e0;
     }
 </style>
