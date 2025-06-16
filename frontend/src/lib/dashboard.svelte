@@ -29,6 +29,10 @@ let selectedConsultaTab: 'vetorial' | 'titulo' | 'publicacoesAutor' | 'autor' = 
 // Funções para interagir com o backend
 async function inserirAutor() {
     mensagem = "";
+    if (!nomeAutor || !anoNascimento || !pais) {
+        mensagem = "Preencha todos os campos para inserir o autor.";
+        return;
+    }
     const res = await fetch(`${BASE}/inserirAutor`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -44,6 +48,10 @@ async function inserirAutor() {
 
 async function inserirPublicacao() {
     mensagem = "";
+    if (!titulo || !anoPublicacao || !autorPub || !resumo) {
+        mensagem = "Preencha todos os campos para inserir a publicação.";
+        return;
+    }
     const res = await fetch(`${BASE}/inserirPublicacao`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -281,7 +289,6 @@ async function buscaPorAutor() {
     }
 
     .panel {
-        padding: 40px 0;
         width: 100%;
         max-width: 1200px;
         text-align: left; /* Alinha texto à esquerda */
