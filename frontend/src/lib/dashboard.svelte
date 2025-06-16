@@ -31,6 +31,7 @@ async function inserirAutor() {
     mensagem = "";
     if (!nomeAutor || !anoNascimento || !pais) {
         mensagem = "Preencha todos os campos para inserir o autor.";
+        setTimeout(() => { mensagem = ""; }, 1500);
         return;
     }
     const res = await fetch(`${BASE}/inserirAutor`, {
@@ -44,12 +45,14 @@ async function inserirAutor() {
     });
     const data = await res.json();
     mensagem = data.id > 0 ? "Autor inserido com sucesso!" : "Erro ao inserir autor.";
+    setTimeout(() => { mensagem = ""; }, 1500);
 }
 
 async function inserirPublicacao() {
     mensagem = "";
     if (!titulo || !anoPublicacao || !autorPub || !resumo) {
         mensagem = "Preencha todos os campos para inserir a publicação.";
+        setTimeout(() => { mensagem = ""; }, 1500);
         return;
     }
     const res = await fetch(`${BASE}/inserirPublicacao`, {
@@ -64,6 +67,7 @@ async function inserirPublicacao() {
     });
     const data = await res.json();
     mensagem = data.publicacao_id > 0 ? "Publicação inserida com sucesso!" : "Erro ao inserir publicação.";
+    setTimeout(() => { mensagem = ""; }, 1500);
 }
 
 async function buscaVetorial() {
@@ -74,8 +78,10 @@ async function buscaVetorial() {
         const data = await res.json();
         resultado = data;
         mensagem = (Array.isArray(data) && data.length === 0) ? "Nenhum resultado encontrado." : "";
+        if (mensagem) setTimeout(() => { mensagem = ""; }, 1500);
     } catch (e) {
         mensagem = "Erro ao buscar.";
+        setTimeout(() => { mensagem = ""; }, 1500);
     }
 }
 
@@ -87,8 +93,10 @@ async function buscaPorPublicacoes() {
         const data = await res.json();
         resultado = data;
         mensagem = (Array.isArray(data) && data.length === 0) ? "Nenhum resultado encontrado." : "";
+        if (mensagem) setTimeout(() => { mensagem = ""; }, 1500);
     } catch (e) {
         mensagem = "Erro ao buscar.";
+        setTimeout(() => { mensagem = ""; }, 1500);
     }
 }
 
@@ -100,8 +108,10 @@ async function buscaPorPublicacoesDoAutor() {
         const data = await res.json();
         resultado = data;
         mensagem = (Array.isArray(data) && data.length === 0) ? "Nenhum resultado encontrado." : "";
+        if (mensagem) setTimeout(() => { mensagem = ""; }, 1500);
     } catch (e) {
         mensagem = "Erro ao buscar.";
+        setTimeout(() => { mensagem = ""; }, 1500);
     }
 }
 
@@ -113,8 +123,10 @@ async function buscaPorAutor() {
         const data = await res.json();
         resultado = data;
         mensagem = (Array.isArray(data) && data.length === 0) ? "Nenhum resultado encontrado." : "";
+        if (mensagem) setTimeout(() => { mensagem = ""; }, 1500);
     } catch (e) {
         mensagem = "Erro ao buscar.";
+        setTimeout(() => { mensagem = ""; }, 1500);
     }
 }
 </script>
