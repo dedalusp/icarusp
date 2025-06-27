@@ -1,4 +1,5 @@
 use anyhow::Result;
+use pgvector::Vector;
 use serde::Serialize;
 use sqlx::{PgPool, Row};
 
@@ -103,7 +104,7 @@ pub async fn query_publicacoes_by_embedding(
 ) -> Result<Vec<PublicacaoVetorial>> {
     // Compute the embedding for the query text
     let query_embedding = compute_embedding(prompt)?;
-    let embedding_vec = pgvector::Vector::from(query_embedding);
+    let embedding_vec = Vector::from(query_embedding);
 
     let rows = sqlx::query(
         "SELECT titulo, ano_publicacao, resumo,

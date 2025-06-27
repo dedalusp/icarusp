@@ -1,4 +1,5 @@
 use anyhow::Result;
+use pgvector::Vector;
 use sqlx::PgPool;
 
 use crate::classes::{Autor, Publicacao};
@@ -19,14 +20,14 @@ pub async fn insert_autor(pool: &PgPool, autor: &Autor) -> Result<String> {
 /// Inserts a Publicacao into the Publicacoes table and returns the titulo as string.
 pub async fn insert_publicacao(pool: &PgPool, publicacao: &Publicacao) -> Result<String> {
     // Convert Vec<f32> to pgvector::Vector
-    let embedding_vec = pgvector::Vector::from(publicacao.embedding.clone());
+    let embedding_vec = Vector::from(publicacao.get_embedding().clone());
 
     sqlx::query(
         "INSERT INTO Publicacoes (titulo, ano_publicacao, resumo, embedding) VALUES ($1, $2, $3, $4);",
     )
-    .bind(&publicacao.titulo)
-    .bind(publicacao.ano_publicacao as i32)
-    .bind(&publicacao.resumo)
+    .bind(&publicacao.get_titulo())
+    .bind(publicacao.get_ano_publicacao() as i32)
+    .bind(&publicacao.get_resumo())
     .bind(embedding_vec)
     .execute(pool)
     .await

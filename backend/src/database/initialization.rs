@@ -1,5 +1,5 @@
 use anyhow::Result;
-use sqlx::{PgPool, Row};
+use sqlx::PgPool;
 
 /// Hardcoded constant for the vector dimension.
 const VECTOR_DIMENSION: i32 = 512;

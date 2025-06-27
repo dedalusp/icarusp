@@ -39,29 +39,6 @@ pub fn compute_embedding(text: &str) -> Result<Vec<f32>> {
     Ok(embedding)
 }
 
-/// Computes the cosine similarity between pairs of embeddings (Vec<f32>).
-fn compute_cosine_similarity(embeddings: &[Vec<f32>]) -> Result<Vec<(f32, usize, usize)>> {
-    let mut similarities = vec![];
-    for i in 0..embeddings.len() {
-        let e_i = &embeddings[i];
-        for j in (i + 1)..embeddings.len() {
-            let e_j = &embeddings[j];
-            // Compute dot product
-            let sum_ij: f32 = e_i.iter().zip(e_j.iter()).map(|(a, b)| a * b).sum();
-            // Compute norms
-            let sum_i2: f32 = e_i.iter().map(|x| x * x).sum();
-            let sum_j2: f32 = e_j.iter().map(|x| x * x).sum();
-            let cosine_similarity = if sum_i2 > 0.0 && sum_j2 > 0.0 {
-                sum_ij / (sum_i2.sqrt() * sum_j2.sqrt())
-            } else {
-                0.0
-            };
-            similarities.push((cosine_similarity, i, j));
-        }
-    }
-    similarities.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
-    Ok(similarities)
-}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -97,38 +74,5 @@ mod tests {
         assert!(nonzero.len() > 0);
         let norm = emb.iter().map(|x| x * x).sum::<f32>().sqrt();
         assert!((norm - 1.0).abs() < 1e-5);
-    }
-
-    #[test]
-    fn test_compute_cosine_similarity_identical() {
-        let emb1 = compute_embedding("hello world").unwrap();
-        let emb2 = compute_embedding("hello world").unwrap();
-        let sims = compute_cosine_similarity(&[emb1.clone(), emb2.clone()]).unwrap();
-        assert_eq!(sims.len(), 1);
-        let (sim, i, j) = sims[0];
-        assert_eq!(i, 0);
-        assert_eq!(j, 1);
-        assert!((sim - 1.0).abs() < 1e-5);
-    }
-
-    #[test]
-    fn test_compute_cosine_similarity_different() {
-        let emb1 = compute_embedding("hello world").unwrap();
-        let emb2 = compute_embedding("rust language").unwrap();
-        let sims = compute_cosine_similarity(&[emb1, emb2]).unwrap();
-        assert_eq!(sims.len(), 1);
-        let (sim, _, _) = sims[0];
-        assert!(sim >= -1.0 && sim <= 1.0);
-    }
-
-    #[test]
-    fn test_compute_cosine_similarity_multiple() {
-        let emb1 = compute_embedding("abc").unwrap();
-        let emb2 = compute_embedding("abd").unwrap();
-        let emb3 = compute_embedding("xyz").unwrap();
-        let sims = compute_cosine_similarity(&[emb1, emb2, emb3]).unwrap();
-        assert_eq!(sims.len(), 3);
-        // Should be sorted by similarity descending
-        assert!(sims[0].0 >= sims[1].0 && sims[1].0 >= sims[2].0);
     }
 }

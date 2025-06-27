@@ -40,9 +40,6 @@ impl fmt::Display for Autor {
     }
 }
 
-/// Hardcoded constant for the vector dimension.
-const VECTOR_DIMENSION: u32 = 512;
-
 pub struct Publicacao {
     pub titulo: String,
     pub ano_publicacao: u32,
