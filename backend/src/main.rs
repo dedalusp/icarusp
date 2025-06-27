@@ -1,14 +1,19 @@
-use actix_web::{post, web, App, HttpServer, Responder, HttpResponse};
-use serde::{Deserialize, Serialize};
 use actix_cors::Cors;
-use limbo::Connection;
+use actix_web::{post, web, App, HttpServer, Responder};
+use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 
 mod classes;
 mod database;
+mod embedding;
 
 use classes::{Autor, Publicacao};
-use database::initialization::{initialize_db_connection, init_tables};
-use database::query::{get_autor_by_name, get_publicacao_by_title, get_works_by_autor_name, query_publicacoes_by_embedding};
+use database::initialization::{init_tables, initialize_db_connection};
+use database::insertion::{insert_autor, insert_publication_with_author};
+use database::query::{
+    get_autor_by_name, get_publicacao_by_title, get_works_by_autor_name,
+    query_publicacoes_by_embedding,
+};
 
 #[derive(Deserialize)]
 struct InserirAutor {
@@ -47,7 +52,6 @@ struct BuscaPorAutor {
 
 #[derive(Serialize)]
 struct InserirAutorResponse {
-    id: i64,
     nome: String,
     ano_nascimento: u32,
     pais: String,
@@ -55,8 +59,6 @@ struct InserirAutorResponse {
 
 #[derive(Serialize)]
 struct InserirPublicacaoResponse {
-    publicacao_id: i64,
-    autor_id: i64,
     titulo: String,
     ano_publicacao: u32,
     resumo: String,
@@ -64,11 +66,10 @@ struct InserirPublicacaoResponse {
 }
 
 #[post("/inserirAutor")]
-async fn inserir_autor(dados: web::Json<InserirAutor>, conn: web::Data<Connection>) -> impl Responder {
+async fn inserir_autor(dados: web::Json<InserirAutor>, pool: web::Data<PgPool>) -> impl Responder {
     let autor = Autor::new(&dados.nome, dados.ano_nascimento, &dados.pais);
-    match autor.insert(&conn).await {
-        Ok(id) => web::Json(InserirAutorResponse {
-            id,
+    match insert_autor(&pool, &autor).await {
+        Ok(_nome) => web::Json(InserirAutorResponse {
             nome: dados.nome.clone(),
             ano_nascimento: dados.ano_nascimento,
             pais: dados.pais.clone(),
@@ -76,28 +77,6 @@ async fn inserir_autor(dados: web::Json<InserirAutor>, conn: web::Data<Connectio
         Err(e) => {
             eprintln!("Erro ao inserir autor: {}", e);
             web::Json(InserirAutorResponse {
-                id: -1,
-                nome: "".to_string(),
-                ano_nascimento: 0,
-                pais: "".to_string(),
-            })
-        }
-    }
-}
-#[post("/inserirPublicacao")]
-async fn inserir_autor(dados: web::Json<InserirAutor>, conn: web::Data<Connection>) -> impl Responder {
-    let autor = Autor::new(&dados.nome, dados.ano_nascimento, &dados.pais);
-    match autor.insert(&conn).await {
-        Ok(id) => web::Json(InserirAutorResponse {
-            id,
-            nome: dados.nome.clone(),
-            ano_nascimento: dados.ano_nascimento,
-            pais: dados.pais.clone(),
-        }),
-        Err(e) => {
-            eprintln!("Erro ao inserir autor: {}", e);
-            web::Json(InserirAutorResponse {
-                id: -1,
                 nome: "".to_string(),
                 ano_nascimento: 0,
                 pais: "".to_string(),
@@ -107,14 +86,15 @@ async fn inserir_autor(dados: web::Json<InserirAutor>, conn: web::Data<Connectio
 }
 
 #[post("/inserirPublicacao")]
-async fn inserir_publicacao(dados: web::Json<InserirPublicacao>, conn: web::Data<Connection>) -> impl Responder {
+async fn inserir_publicacao(
+    dados: web::Json<InserirPublicacao>,
+    pool: web::Data<PgPool>,
+) -> impl Responder {
     let publicacao = match Publicacao::new(&dados.titulo, dados.ano_publicacao, &dados.resumo) {
         Ok(p) => p,
         Err(e) => {
             eprintln!("Erro ao criar publicacao: {}", e);
             return web::Json(InserirPublicacaoResponse {
-                publicacao_id: -1,
-                autor_id: -1,
                 titulo: "".to_string(),
                 ano_publicacao: 0,
                 resumo: "".to_string(),
@@ -122,10 +102,8 @@ async fn inserir_publicacao(dados: web::Json<InserirPublicacao>, conn: web::Data
             });
         }
     };
-    match publicacao.insert(&conn, &dados.autor).await {
-        Ok((autor_id, publicacao_id)) => web::Json(InserirPublicacaoResponse {
-            publicacao_id,
-            autor_id,
+    match insert_publication_with_author(&pool, &publicacao, &dados.autor).await {
+        Ok((_autor_nome, _publicacao_titulo)) => web::Json(InserirPublicacaoResponse {
             titulo: dados.titulo.clone(),
             ano_publicacao: dados.ano_publicacao,
             resumo: dados.resumo.clone(),
@@ -134,8 +112,6 @@ async fn inserir_publicacao(dados: web::Json<InserirPublicacao>, conn: web::Data
         Err(e) => {
             eprintln!("Erro ao inserir publicacao: {}", e);
             web::Json(InserirPublicacaoResponse {
-                publicacao_id: -1,
-                autor_id: -1,
                 titulo: "".to_string(),
                 ano_publicacao: 0,
                 resumo: "".to_string(),
@@ -146,8 +122,11 @@ async fn inserir_publicacao(dados: web::Json<InserirPublicacao>, conn: web::Data
 }
 
 #[post("/buscaVetorial")]
-async fn busca_vetorial(query: web::Query<BuscaVetorial>, conn: web::Data<Connection>) -> impl Responder {
-    match query_publicacoes_by_embedding(&conn, &query.resumo, 5).await {
+async fn busca_vetorial(
+    query: web::Query<BuscaVetorial>,
+    pool: web::Data<PgPool>,
+) -> impl Responder {
+    match query_publicacoes_by_embedding(&pool, &query.resumo, 5).await {
         Ok(results) => web::Json(results),
         Err(e) => {
             eprintln!("Error querying publicacoes by embedding: {}", e);
@@ -157,8 +136,11 @@ async fn busca_vetorial(query: web::Query<BuscaVetorial>, conn: web::Data<Connec
 }
 
 #[post("/buscaPorPublicacoes")]
-async fn busca_por_publicacoes(query: web::Query<BuscaPorPublicacoes>, conn: web::Data<Connection>) -> impl Responder {
-    match get_publicacao_by_title(&conn, &query.titulo).await {
+async fn busca_por_publicacoes(
+    query: web::Query<BuscaPorPublicacoes>,
+    pool: web::Data<PgPool>,
+) -> impl Responder {
+    match get_publicacao_by_title(&pool, &query.titulo).await {
         Ok(results) => web::Json(results),
         Err(e) => {
             eprintln!("Error querying publicacoes by title: {}", e);
@@ -168,8 +150,11 @@ async fn busca_por_publicacoes(query: web::Query<BuscaPorPublicacoes>, conn: web
 }
 
 #[post("/buscaPorPublicacoesDoAutor")]
-async fn busca_por_publicacoes_do_autor(query: web::Query<BuscaPorPublicacoesDoAutor>, conn: web::Data<Connection>) -> impl Responder {
-    match get_works_by_autor_name(&conn, &query.nome).await {
+async fn busca_por_publicacoes_do_autor(
+    query: web::Query<BuscaPorPublicacoesDoAutor>,
+    pool: web::Data<PgPool>,
+) -> impl Responder {
+    match get_works_by_autor_name(&pool, &query.nome).await {
         Ok(results) => web::Json(results),
         Err(e) => {
             eprintln!("Error querying publicacoes by autor: {}", e);
@@ -179,8 +164,11 @@ async fn busca_por_publicacoes_do_autor(query: web::Query<BuscaPorPublicacoesDoA
 }
 
 #[post("/buscaPorAutor")]
-async fn busca_por_autor(query: web::Query<BuscaPorAutor>, conn: web::Data<Connection>) -> impl Responder {
-    match get_autor_by_name(&conn, &query.nome).await {
+async fn busca_por_autor(
+    query: web::Query<BuscaPorAutor>,
+    pool: web::Data<PgPool>,
+) -> impl Responder {
+    match get_autor_by_name(&pool, &query.nome).await {
         Ok(results) => web::Json(results),
         Err(e) => {
             eprintln!("Error querying autor by name: {}", e);
@@ -191,12 +179,23 @@ async fn busca_por_autor(query: web::Query<BuscaPorAutor>, conn: web::Data<Conne
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let conn = initialize_db_connection("database.db").await.expect("Failed to initialize database");
-    init_tables(&conn).await.expect("Failed to initialize tables");
+    // Get database URL from environment variable or use default
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgresql://username:password@localhost/database_name".to_string());
 
-    HttpServer::new(|| {
+    let pool = initialize_db_connection(&database_url)
+        .await
+        .expect("Failed to initialize database connection pool");
+
+    init_tables(&pool)
+        .await
+        .expect("Failed to initialize tables");
+
+    println!("Starting server on http://127.0.0.1:8080");
+
+    HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(conn.clone()))
+            .app_data(web::Data::new(pool.clone()))
             .wrap(Cors::permissive())
             .service(inserir_autor)
             .service(inserir_publicacao)
@@ -205,7 +204,7 @@ async fn main() -> std::io::Result<()> {
             .service(busca_por_publicacoes_do_autor)
             .service(busca_por_autor)
     })
-    .bind("127.0.1:8080")?
+    .bind("127.0.0.1:8080")?
     .run()
     .await
 }

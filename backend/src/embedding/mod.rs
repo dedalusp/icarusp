@@ -6,8 +6,8 @@ const VOCAB_SIZE: usize = 512;
 
 /// Simple hash function for n-grams to map to vocabulary indices.
 fn ngram_hash(ngram: &[u8]) -> usize {
-    use std::hash::Hasher;
     use std::collections::hash_map::DefaultHasher;
+    use std::hash::Hasher;
     let mut hasher = DefaultHasher::new();
     hasher.write(ngram);
     (hasher.finish() as usize) % VOCAB_SIZE
@@ -15,7 +15,7 @@ fn ngram_hash(ngram: &[u8]) -> usize {
 
 /// Computes an embedding (float vector) for a given input text using N-gram
 /// hashing.
-fn compute_embedding(text: &str) -> Result<Vec<f32>> {
+pub fn compute_embedding(text: &str) -> Result<Vec<f32>> {
     // Initialize an embedding vector with zeros.
     // The size of the vector is determined by the vocabulary size.
     let mut embedding = vec![0f32; VOCAB_SIZE];
@@ -38,7 +38,6 @@ fn compute_embedding(text: &str) -> Result<Vec<f32>> {
     }
     Ok(embedding)
 }
-
 
 /// Computes the cosine similarity between pairs of embeddings (Vec<f32>).
 fn compute_cosine_similarity(embeddings: &[Vec<f32>]) -> Result<Vec<(f32, usize, usize)>> {

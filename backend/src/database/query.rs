@@ -1,113 +1,131 @@
-use limbo::{Connection};
 use anyhow::Result;
-use serde::Serialize; // Import Serialize for JSON serialization
+use serde::Serialize;
+use sqlx::{PgPool, Row};
 
+use crate::embedding::compute_embedding;
 
-use crate::embedding::compute_embedding; // Import the compute_embedding function
-
-#[derive(Serialize)] // Derive Serialize for JSON serialization
+#[derive(Serialize)]
 pub struct AutorOutput {
     pub nome: String,
     pub ano_nascimento: u32,
     pub pais: String,
 }
 
-#[derive(Serialize)] // Derive Serialize for JSON serialization
+#[derive(Serialize)]
 pub struct PublicacaoOutput {
     pub titulo: String,
     pub ano_publicacao: u32,
     pub resumo: String,
 }
 
-#[derive(Serialize)] // Derive Serialize for JSON serialization
+#[derive(Serialize)]
 pub struct PublicacaoVetorial {
     pub publicacao: PublicacaoOutput,
     pub distance: f64,
 }
 
 /// Retrieves an Autor by a partial name match.
-pub async fn get_autor_by_name(conn: &Connection, name: &str) -> Result<Vec<AutorOutput>> {
-    let mut stmt = conn.prepare(
-        "SELECT nome, ano_nascimento, pais FROM Autores WHERE nome LIKE ?;"
-    ).await?;
-    let mut rows = stmt.query(&[&format!("%{}%", name)]).await?;
+pub async fn get_autor_by_name(pool: &PgPool, name: &str) -> Result<Vec<AutorOutput>> {
+    let pattern = format!("%{}%", name);
+
+    let rows = sqlx::query("SELECT nome, ano_nascimento, pais FROM Autores WHERE nome ILIKE $1;")
+        .bind(&pattern)
+        .fetch_all(pool)
+        .await?;
 
     let mut results = Vec::new();
-    while let Some(row) = rows.next().await? {
+    for row in rows {
         results.push(AutorOutput {
-            nome: row.get(0)?,
-            ano_nascimento: row.get(1)?,
-            pais: row.get(2)?,
+            nome: row.get("nome"),
+            ano_nascimento: row.get::<i32, _>("ano_nascimento") as u32,
+            pais: row.get("pais"),
         });
     }
     Ok(results)
 }
 
 /// Retrieves a Publicacao by a partial title match.
-pub async fn get_publicacao_by_title(conn: &Connection, title: &str) -> Result<Vec<PublicacaoOutput>> {
-    let mut stmt = conn.prepare(
-        "SELECT titulo, ano_publicacao, resumo FROM Publicacoes WHERE titulo LIKE ?;"
-    ).await?;
-    let mut rows = stmt.query(&[&format!("%{}%", title)]).await?;
+pub async fn get_publicacao_by_title(pool: &PgPool, title: &str) -> Result<Vec<PublicacaoOutput>> {
+    let pattern = format!("%{}%", title);
+
+    let rows = sqlx::query(
+        "SELECT titulo, ano_publicacao, resumo FROM Publicacoes WHERE titulo ILIKE $1;",
+    )
+    .bind(&pattern)
+    .fetch_all(pool)
+    .await?;
 
     let mut results = Vec::new();
-    while let Some(row) = rows.next().await? {
+    for row in rows {
         results.push(PublicacaoOutput {
-            titulo: row.get(0)?,
-            ano_publicacao: row.get(1)?,
-            resumo: row.get(2)?,
+            titulo: row.get("titulo"),
+            ano_publicacao: row.get::<i32, _>("ano_publicacao") as u32,
+            resumo: row.get("resumo"),
         });
     }
     Ok(results)
 }
 
 /// Retrieves all Publicacoes written by a specific author name (partial match).
-pub async fn get_works_by_autor_name(conn: &Connection, autor_name: &str) -> Result<Vec<PublicacaoOutput>> {
-    let mut stmt = conn.prepare(
+pub async fn get_works_by_autor_name(
+    pool: &PgPool,
+    autor_name: &str,
+) -> Result<Vec<PublicacaoOutput>> {
+    let pattern = format!("%{}%", autor_name);
+
+    let rows = sqlx::query(
         "SELECT P.titulo, P.ano_publicacao, P.resumo
          FROM Publicacoes P
-         JOIN Escreveu_Publicacao EP ON P.id = EP.publicacao_id
-         JOIN Autores A ON EP.autor_id = A.id
-         WHERE A.nome LIKE ?;"
-    ).await?;
-    let mut rows = stmt.query(&[&format!("%{}%", autor_name)]).await?;
+         JOIN Escreveu_Publicacao EP ON P.titulo = EP.publicacao_titulo
+         WHERE EP.autor_nome ILIKE $1;",
+    )
+    .bind(&pattern)
+    .fetch_all(pool)
+    .await?;
 
     let mut results = Vec::new();
-    while let Some(row) = rows.next().await? {
+    for row in rows {
         results.push(PublicacaoOutput {
-            titulo: row.get(0)?,
-            ano_publicacao: row.get(1)?,
-            resumo: row.get(2)?,
+            titulo: row.get("titulo"),
+            ano_publicacao: row.get::<i32, _>("ano_publicacao") as u32,
+            resumo: row.get("resumo"),
         });
     }
     Ok(results)
 }
 
-/// Performs a similarity search for Publicacoes using vector_distance_cos.
+/// Performs a similarity search for Publicacoes using pgvector cosine distance.
 /// Returns publications ordered by cosine distance (lower is more similar).
-pub async fn query_publicacoes_by_embedding(conn: &Connection, prompt: &str, limit: u32) -> Result<Vec<PublicacaoVetorial>> {
+pub async fn query_publicacoes_by_embedding(
+    pool: &PgPool,
+    prompt: &str,
+    limit: u32,
+) -> Result<Vec<PublicacaoVetorial>> {
     // Compute the embedding for the query text
     let query_embedding = compute_embedding(prompt)?;
-    let embedding_json_str = serde_json::to_string(&query_embedding)?;
+    let embedding_vec = pgvector::Vector::from(query_embedding);
 
-    let stmt = conn.prepare(
+    let rows = sqlx::query(
         "SELECT titulo, ano_publicacao, resumo,
-                vector_distance_cos(embedding, vector(?)) AS distance
+                (embedding <=> $1) AS distance
          FROM Publicacoes
          ORDER BY distance ASC
-         LIMIT ?;"
-    ).await?;
-    let mut rows = stmt.query(&[&embedding_json_str, &limit.to_string()]).await?;
+         LIMIT $2;",
+    )
+    .bind(embedding_vec)
+    .bind(limit as i64)
+    .fetch_all(pool)
+    .await?;
 
     let mut results = Vec::new();
-    while let Some(row) = rows.next().await? {
+    for row in rows {
         results.push(PublicacaoVetorial {
             publicacao: PublicacaoOutput {
-                titulo: row.get(0)?,
-                ano_publicacao: row.get(1)?,
-                resumo: row.get(2)?,
+                titulo: row.get("titulo"),
+                ano_publicacao: row.get::<i32, _>("ano_publicacao") as u32,
+                resumo: row.get("resumo"),
             },
-            distance: row.get(3)?, // Assuming distance is the 5th column (index 4)
+            distance: row.get::<f64, _>("distance"),
         });
     }
     Ok(results)
