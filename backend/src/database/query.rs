@@ -1,133 +1,263 @@
 use anyhow::Result;
-use pgvector::Vector;
+use diesel::prelude::*;
+use pgvector::{Vector, VectorExpressionMethods};
 use serde::Serialize;
-use sqlx::{PgPool, Row};
 
 use crate::embedding::compute_embedding;
+use crate::models::{Author, Book};
+use crate::schema::{authors, books, books_authors};
 
-#[derive(Serialize)]
-pub struct AutorOutput {
-    pub nome: String,
-    pub ano_nascimento: u32,
-    pub pais: String,
+#[derive(Serialize, Debug)]
+pub struct AuthorOutput {
+    pub id: i32,
+    pub name: String,
+    pub birth_year: i32,
+    pub country: String,
 }
 
-#[derive(Serialize)]
-pub struct PublicacaoOutput {
-    pub titulo: String,
-    pub ano_publicacao: u32,
-    pub resumo: String,
+impl From<Author> for AuthorOutput {
+    fn from(author: Author) -> Self {
+        AuthorOutput {
+            id: author.id,
+            name: author.name,
+            birth_year: author.birth_year,
+            country: author.country,
+        }
+    }
 }
 
-#[derive(Serialize)]
-pub struct PublicacaoVetorial {
-    pub publicacao: PublicacaoOutput,
-    pub distance: f64,
+#[derive(Serialize, Debug)]
+pub struct BookOutput {
+    pub id: i32,
+    pub title: String,
+    pub publication_year: i32,
+    pub abstract_text: String,
 }
 
-/// Retrieves an Autor by a partial name match.
-pub async fn get_autor_by_name(pool: &PgPool, name: &str) -> Result<Vec<AutorOutput>> {
+impl From<Book> for BookOutput {
+    fn from(book: Book) -> Self {
+        BookOutput {
+            id: book.id,
+            title: book.title,
+            publication_year: book.publication_year,
+            abstract_text: book.abstract_text,
+        }
+    }
+}
+
+/// Retrieves authors by partial name match
+pub fn get_authors_by_name(conn: &mut PgConnection, name: &str) -> Result<Vec<AuthorOutput>> {
     let pattern = format!("%{}%", name);
 
-    let rows = sqlx::query("SELECT nome, ano_nascimento, pais FROM Autores WHERE nome ILIKE $1;")
-        .bind(&pattern)
-        .fetch_all(pool)
-        .await?;
+    let authors = authors::table
+        .filter(authors::name.ilike(&pattern))
+        .select(Author::as_select())
+        .load(conn)
+        .map_err(|e| anyhow::anyhow!("Failed to query authors by name: {}", e))?;
 
-    let mut results = Vec::new();
-    for row in rows {
-        results.push(AutorOutput {
-            nome: row.get("nome"),
-            ano_nascimento: row.get::<i32, _>("ano_nascimento") as u32,
-            pais: row.get("pais"),
-        });
-    }
-    Ok(results)
+    Ok(authors.into_iter().map(AuthorOutput::from).collect())
 }
 
-/// Retrieves a Publicacao by a partial title match.
-pub async fn get_publicacao_by_title(pool: &PgPool, title: &str) -> Result<Vec<PublicacaoOutput>> {
+/// Retrieves books by partial title match
+pub fn get_books_by_title(conn: &mut PgConnection, title: &str) -> Result<Vec<BookOutput>> {
     let pattern = format!("%{}%", title);
 
-    let rows = sqlx::query(
-        "SELECT titulo, ano_publicacao, resumo FROM Publicacoes WHERE titulo ILIKE $1;",
-    )
-    .bind(&pattern)
-    .fetch_all(pool)
-    .await?;
+    let books = books::table
+        .filter(books::title.ilike(&pattern))
+        .select(Book::as_select())
+        .load(conn)
+        .map_err(|e| anyhow::anyhow!("Failed to query books by title: {}", e))?;
 
-    let mut results = Vec::new();
-    for row in rows {
-        results.push(PublicacaoOutput {
-            titulo: row.get("titulo"),
-            ano_publicacao: row.get::<i32, _>("ano_publicacao") as u32,
-            resumo: row.get("resumo"),
-        });
-    }
-    Ok(results)
+    Ok(books.into_iter().map(BookOutput::from).collect())
 }
 
-/// Retrieves all Publicacoes written by a specific author name (partial match).
-pub async fn get_works_by_autor_name(
-    pool: &PgPool,
-    autor_name: &str,
-) -> Result<Vec<PublicacaoOutput>> {
-    let pattern = format!("%{}%", autor_name);
+/// Retrieves a specific author by ID
+pub fn get_author_by_id(conn: &mut PgConnection, author_id: i32) -> Result<AuthorOutput> {
+    let author = authors::table
+        .find(author_id)
+        .select(Author::as_select())
+        .first(conn)
+        .map_err(|e| anyhow::anyhow!("Author with ID {} not found: {}", author_id, e))?;
 
-    let rows = sqlx::query(
-        "SELECT P.titulo, P.ano_publicacao, P.resumo
-         FROM Publicacoes P
-         JOIN Escreveu_Publicacao EP ON P.titulo = EP.publicacao_titulo
-         WHERE EP.autor_nome ILIKE $1;",
-    )
-    .bind(&pattern)
-    .fetch_all(pool)
-    .await?;
-
-    let mut results = Vec::new();
-    for row in rows {
-        results.push(PublicacaoOutput {
-            titulo: row.get("titulo"),
-            ano_publicacao: row.get::<i32, _>("ano_publicacao") as u32,
-            resumo: row.get("resumo"),
-        });
-    }
-    Ok(results)
+    Ok(AuthorOutput::from(author))
 }
 
-/// Performs a similarity search for Publicacoes using pgvector cosine distance.
-/// Returns publications ordered by cosine distance (lower is more similar).
-pub async fn query_publicacoes_by_embedding(
-    pool: &PgPool,
-    prompt: &str,
-    limit: u32,
-) -> Result<Vec<PublicacaoVetorial>> {
+/// Retrieves a specific book by ID
+pub fn get_book_by_id(conn: &mut PgConnection, book_id: i32) -> Result<BookOutput> {
+    let book = books::table
+        .find(book_id)
+        .select(Book::as_select())
+        .first(conn)
+        .map_err(|e| anyhow::anyhow!("Book with ID {} not found: {}", book_id, e))?;
+
+    Ok(BookOutput::from(book))
+}
+
+/// Retrieves all books written by a specific author (by author ID)
+pub fn get_books_by_author_id(conn: &mut PgConnection, author_id: i32) -> Result<Vec<BookOutput>> {
+    let books = books::table
+        .inner_join(books_authors::table)
+        .filter(books_authors::author_id.eq(author_id))
+        .select(Book::as_select())
+        .load(conn)
+        .map_err(|e| anyhow::anyhow!("Failed to query books by author ID: {}", e))?;
+
+    Ok(books.into_iter().map(BookOutput::from).collect())
+}
+
+/// Retrieves all books written by a specific author (by author name, partial match)
+pub fn get_books_by_author_name(
+    conn: &mut PgConnection,
+    author_name: &str,
+) -> Result<Vec<BookOutput>> {
+    let pattern = format!("%{}%", author_name);
+
+    let books = books::table
+        .inner_join(books_authors::table)
+        .inner_join(authors::table.on(authors::id.eq(books_authors::author_id)))
+        .filter(authors::name.ilike(&pattern))
+        .select(Book::as_select())
+        .load(conn)
+        .map_err(|e| anyhow::anyhow!("Failed to query books by author name: {}", e))?;
+
+    Ok(books.into_iter().map(BookOutput::from).collect())
+}
+
+/// Retrieves all authors for a specific book (by book ID)
+pub fn get_authors_by_book_id(conn: &mut PgConnection, book_id: i32) -> Result<Vec<AuthorOutput>> {
+    let authors = authors::table
+        .inner_join(books_authors::table)
+        .filter(books_authors::book_id.eq(book_id))
+        .select(Author::as_select())
+        .load(conn)
+        .map_err(|e| anyhow::anyhow!("Failed to query authors by book ID: {}", e))?;
+
+    Ok(authors.into_iter().map(AuthorOutput::from).collect())
+}
+
+/// Performs a similarity search for books using pgvector cosine distance
+/// Returns books ordered by cosine distance (lower distance = more similar)
+pub fn similarity_search_by_prompt(
+    conn: &mut PgConnection,
+    query_text: &str,
+    limit: i32,
+) -> Result<Vec<BookOutput>> {
     // Compute the embedding for the query text
-    let query_embedding = compute_embedding(prompt)?;
+    let query_embedding = compute_embedding(query_text)?;
     let embedding_vec = Vector::from(query_embedding);
 
-    let rows = sqlx::query(
-        "SELECT titulo, ano_publicacao, resumo,
-                (embedding <=> $1) AS distance
-         FROM Publicacoes
-         ORDER BY distance ASC
-         LIMIT $2;",
-    )
-    .bind(embedding_vec)
-    .bind(limit as i64)
-    .fetch_all(pool)
-    .await?;
+    // Use pgvector expression methods for similarity search
+    let similar_books = books::table
+        .order(books::embedding.cosine_distance(&embedding_vec))
+        .limit(limit as i64)
+        .select(Book::as_select())
+        .load(conn)
+        .map_err(|e| anyhow::anyhow!("Failed to execute vector similarity query: {}", e))?;
 
-    let mut results = Vec::new();
-    for row in rows {
-        results.push(PublicacaoVetorial {
-            publicacao: PublicacaoOutput {
-                titulo: row.get("titulo"),
-                ano_publicacao: row.get::<i32, _>("ano_publicacao") as u32,
-                resumo: row.get("resumo"),
-            },
-            distance: row.get::<f64, _>("distance"),
-        });
+    Ok(similar_books.into_iter().map(BookOutput::from).collect())
+}
+
+/// Finds books with similar embeddings to a given book ID using cosine distance
+pub fn find_similar_books(
+    conn: &mut PgConnection,
+    book_id: i32,
+    limit: i32,
+) -> Result<Vec<BookOutput>> {
+    // Get the book information
+    let target_book = get_book_by_id(conn, book_id)?;
+
+    // Compute embedding for the book's abstract text
+    let query_text = &target_book.abstract_text;
+
+    // Use the existing similarity search function to find similar books
+    similarity_search_by_prompt(conn, query_text, limit)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::database::initialization::establish_connection;
+    use crate::database::insertion::{insert_author, insert_book, link_book_author};
+    use crate::models::{NewAuthor, NewBook};
+
+    // Helper function to check if database is available
+    fn db_available() -> bool {
+        std::env::var("DATABASE_URL").is_ok()
     }
-    Ok(results)
+
+    #[test]
+    fn test_get_authors_by_name() {
+        if !db_available() {
+            return;
+        }
+
+        let mut conn = establish_connection().expect("Failed to connect to database");
+
+        // Insert test data
+        let new_author = NewAuthor::new("Test Query Author", 2025, "Brazil");
+        let author = insert_author(&mut conn, &new_author).expect("Failed to insert author");
+
+        // Test query
+        let results = get_authors_by_name(&mut conn, "Query").expect("Failed to query authors");
+        assert!(!results.is_empty());
+        assert!(results.iter().any(|a| a.name.contains("Query")));
+
+        // Cleanup
+        diesel::delete(authors::table.filter(authors::id.eq(author.id)))
+            .execute(&mut conn)
+            .ok();
+    }
+
+    #[test]
+    fn test_get_books_by_title() {
+        if !db_available() {
+            return;
+        }
+
+        let mut conn = establish_connection().expect("Failed to connect to database");
+
+        // Insert test data
+        let new_book = NewBook::new("Test Query Book", 2025, "A test book for querying")
+            .expect("Failed to create book");
+        let book = insert_book(&mut conn, &new_book).expect("Failed to insert book");
+
+        // Test query
+        let results = get_books_by_title(&mut conn, "Query").expect("Failed to query books");
+        assert!(!results.is_empty());
+        assert!(results.iter().any(|b| b.title.contains("Query")));
+
+        // Cleanup
+        diesel::delete(books::table.filter(books::id.eq(book.id)))
+            .execute(&mut conn)
+            .ok();
+    }
+
+    #[test]
+    fn test_query_books_by_embedding() {
+        if !db_available() {
+            return;
+        }
+
+        let mut conn = establish_connection().expect("Failed to connect to database");
+
+        // Insert test data
+        let new_book = NewBook::new(
+            "Embedding Test Book",
+            "This is a book about testing embeddings",
+        )
+        .expect("Failed to create book");
+        let book = insert_book(&mut conn, &new_book).expect("Failed to insert book");
+
+        // Test embedding query
+        let results = query_books_by_embedding(&mut conn, "testing embeddings", 5)
+            .expect("Failed to query books by embedding");
+
+        // Should find at least our test book
+        assert!(!results.is_empty());
+
+        // Cleanup
+        diesel::delete(books::table.filter(books::id.eq(book.id)))
+            .execute(&mut conn)
+            .ok();
+    }
 }

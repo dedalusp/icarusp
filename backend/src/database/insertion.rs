@@ -1,80 +1,186 @@
 use anyhow::Result;
-use pgvector::Vector;
-use sqlx::PgPool;
+use diesel::prelude::*;
 
-use crate::classes::{Autor, Publicacao};
+use crate::models::{Author, Book, BookAuthor, NewAuthor, NewBook, NewBookAuthor};
+use crate::schema::{authors, books, books_authors};
 
-/// Inserts an Autor into the Autores table and returns the nome as string.
-pub async fn insert_autor(pool: &PgPool, autor: &Autor) -> Result<String> {
-    sqlx::query("INSERT INTO Autores (nome, ano_nascimento, pais) VALUES ($1, $2, $3);")
-        .bind(autor.get_nome())
-        .bind(autor.get_ano_nascimento() as i32)
-        .bind(autor.get_pais())
-        .execute(pool)
-        .await
-        .map_err(|e| anyhow::anyhow!("Failed to insert Autor: {}", e))?;
+/// Inserts a new Author into the database and returns the created Author
+pub fn insert_author(conn: &mut PgConnection, new_author: &NewAuthor) -> Result<Author> {
+    let author = diesel::insert_into(authors::table)
+        .values(new_author)
+        .returning(Author::as_returning())
+        .get_result(conn)
+        .map_err(|e| anyhow::anyhow!("Failed to insert author: {}", e))?;
 
-    Ok(autor.get_nome().to_string())
+    Ok(author)
 }
 
-/// Inserts a Publicacao into the Publicacoes table and returns the titulo as string.
-pub async fn insert_publicacao(pool: &PgPool, publicacao: &Publicacao) -> Result<String> {
-    // Convert Vec<f32> to pgvector::Vector
-    let embedding_vec = Vector::from(publicacao.get_embedding().clone());
+/// Inserts a new Book into the database and returns the created Book
+pub fn insert_book(conn: &mut PgConnection, new_book: &NewBook) -> Result<Book> {
+    let book = diesel::insert_into(books::table)
+        .values(new_book)
+        .returning(Book::as_returning())
+        .get_result(conn)
+        .map_err(|e| anyhow::anyhow!("Failed to insert book: {}", e))?;
 
-    sqlx::query(
-        "INSERT INTO Publicacoes (titulo, ano_publicacao, resumo, embedding) VALUES ($1, $2, $3, $4);",
-    )
-    .bind(&publicacao.get_titulo())
-    .bind(publicacao.get_ano_publicacao() as i32)
-    .bind(&publicacao.get_resumo())
-    .bind(embedding_vec)
-    .execute(pool)
-    .await
-    .map_err(|e| anyhow::anyhow!("Failed to insert Publicacao: {}", e))?;
-
-    Ok(publicacao.titulo.clone())
+    Ok(book)
 }
 
-/// Links an author to a publication in the Escreveu_Publicacao table.
-pub async fn link_autor_publication(
-    pool: &PgPool,
-    autor_nome: &str,
-    publicacao_titulo: &str,
-) -> Result<()> {
-    sqlx::query("INSERT INTO Escreveu_Publicacao (autor_nome, publicacao_titulo) VALUES ($1, $2);")
-        .bind(autor_nome)
-        .bind(publicacao_titulo)
-        .execute(pool)
-        .await
-        .map_err(|e| anyhow::anyhow!("Failed to link autor and publicacao: {}", e))?;
+/// Links an author to a book in the books_authors junction table
+pub fn link_book_author(
+    conn: &mut PgConnection,
+    book_id: i32,
+    author_id: i32,
+) -> Result<BookAuthor> {
+    let new_book_author = NewBookAuthor::new(book_id, author_id);
 
-    Ok(())
+    let book_author = diesel::insert_into(books_authors::table)
+        .values(&new_book_author)
+        .returning(BookAuthor::as_returning())
+        .get_result(conn)
+        .map_err(|e| anyhow::anyhow!("Failed to link book and author: {}", e))?;
+
+    Ok(book_author)
 }
 
-/// Inserts a publication and links it to an author by name.
-/// Returns the names of the author and the publication.
-pub async fn insert_publication_with_author(
-    pool: &PgPool,
-    publicacao: &Publicacao,
-    autor_nome: &str,
-) -> Result<(String, String)> {
-    // Check if author exists
-    let row = sqlx::query("SELECT nome FROM Autores WHERE nome = $1;")
-        .bind(autor_nome)
-        .fetch_optional(pool)
-        .await
-        .map_err(|e| anyhow::anyhow!("Failed to execute author lookup query: {}", e))?;
+/// Links a book to multiple authors by their IDs
+/// Returns a vector of created BookAuthor relationships
+pub fn link_book_to_authors(
+    conn: &mut PgConnection,
+    book_id: i32,
+    authors_ids: &[i32],
+) -> Result<Vec<BookAuthor>> {
+    // First, verify all authors exist
+    let existing_authors = authors::table
+        .filter(authors::id.eq_any(authors_ids))
+        .select(Author::as_select())
+        .load(conn)
+        .map_err(|e| anyhow::anyhow!("Failed to verify authors: {}", e))?;
 
-    if row.is_none() {
-        return Err(anyhow::anyhow!("Author '{}' not found", autor_nome));
+    if existing_authors.len() != authors_ids.len() {
+        let existing_ids: Vec<i32> = existing_authors.iter().map(|a| a.id).collect();
+        let missing_ids: Vec<i32> = authors_ids
+            .iter()
+            .filter(|&id| !existing_ids.contains(id))
+            .cloned()
+            .collect();
+        return Err(anyhow::anyhow!(
+            "Authors with IDs {:?} not found",
+            missing_ids
+        ));
     }
 
-    // Insert publication and get its titulo
-    let publicacao_titulo = insert_publicacao(pool, publicacao).await?;
+    // Create BookAuthor relationships for each author
+    let mut book_authors = Vec::new();
+    for &author_id in authors_ids {
+        let book_author = link_book_author(conn, book_id, author_id)?;
+        book_authors.push(book_author);
+    }
 
-    // Link author and publication
-    link_autor_publication(pool, autor_nome, &publicacao_titulo).await?;
+    Ok(book_authors)
+}
 
-    Ok((autor_nome.to_string(), publicacao_titulo))
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::database::initialization::establish_connection;
+    use crate::models::NewBook;
+
+    // Helper function to check if database is available
+    fn db_available() -> bool {
+        std::env::var("DATABASE_URL").is_ok()
+    }
+
+    #[test]
+    fn test_insert_author() {
+        if !db_available() {
+            return;
+        }
+
+        let mut conn = establish_connection().expect("Failed to connect to database");
+        let new_author = NewAuthor::new("Test Author", 2025, "Brazil");
+
+        let result = insert_author(&mut conn, &new_author);
+        assert!(result.is_ok());
+
+        let author = result.unwrap();
+        assert_eq!(author.name, "Test Author");
+        assert_eq!(author.nationality, "Brazil");
+        assert_eq!(author.birth_year, 2025);
+        assert!(author.id > 0);
+
+        // Cleanup
+        diesel::delete(authors::table.filter(authors::id.eq(author.id)))
+            .execute(&mut conn)
+            .ok();
+    }
+
+    #[test]
+    fn test_insert_book() {
+        if !db_available() {
+            return;
+        }
+
+        let mut conn = establish_connection().expect("Failed to connect to database");
+        let new_book =
+            NewBook::new("Test Book", 2025, "A test book summary").expect("Failed to create book");
+
+        let result = insert_book(&mut conn, &new_book);
+        assert!(result.is_ok());
+
+        let book = result.unwrap();
+        assert_eq!(book.title, "Test Book");
+        assert_eq!(book.publication_year, 2025);
+        assert_eq!(book.abstract_text, "A test book summary");
+        assert!(book.id > 0);
+        assert!(book.embedding.is_some());
+
+        // Cleanup
+        diesel::delete(books::table.filter(books::id.eq(book.id)))
+            .execute(&mut conn)
+            .ok();
+    }
+
+    #[test]
+    fn test_link_book_author() {
+        if !db_available() {
+            return;
+        }
+
+        let mut conn = establish_connection().expect("Failed to connect to database");
+
+        // Insert two authors
+        let author1 = insert_author(&mut conn, &NewAuthor::new("Author One", 1980, "USA"))
+            .expect("Failed to insert author1");
+        let author2 = insert_author(&mut conn, &NewAuthor::new("Author Two", 1990, "UK"))
+            .expect("Failed to insert author2");
+
+        // Insert a book
+        let new_book = NewBook::new("Book With Two Authors", 2024, "Summary").unwrap();
+        let book = insert_book(&mut conn, &new_book).expect("Failed to insert book");
+
+        // Link book to both authors
+        let result = link_book_to_authors(&mut conn, book.id, &[author1.id, author2.id]);
+        assert!(result.is_ok());
+        let book_authors = result.unwrap();
+        assert_eq!(book_authors.len(), 2);
+        let author_ids: Vec<i32> = book_authors.iter().map(|ba| ba.author_id).collect();
+        assert!(author_ids.contains(&author1.id));
+        assert!(author_ids.contains(&author2.id));
+
+        // Cleanup
+        diesel::delete(books_authors::table.filter(books_authors::book_id.eq(book.id)))
+            .execute(&mut conn)
+            .ok();
+        diesel::delete(books::table.filter(books::id.eq(book.id)))
+            .execute(&mut conn)
+            .ok();
+        diesel::delete(authors::table.filter(authors::id.eq(author1.id)))
+            .execute(&mut conn)
+            .ok();
+        diesel::delete(authors::table.filter(authors::id.eq(author2.id)))
+            .execute(&mut conn)
+            .ok();
+    }
+        
 }

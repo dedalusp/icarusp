@@ -7,11 +7,9 @@ edition = "2024"
 actix-cors = "0.7.1"
 actix-web = "4.11.0"
 anyhow = "1.0.98"
-serde = "1.0.219"
-sqlx = { version = "0.8.6", features = [
-    "runtime-tokio-rustls",
-    "postgres",
-    "chrono",
-    "uuid",
-] }
-pgvector = { version = "0.4.1", features = ["sqlx"] }
+diesel = { version = "2.2.11", features = ["postgres"] }
+dotenvy = "0.15.7"
+env_logger = "0.11.8"
+log = "0.4.27"
+pgvector = { version = "0.4.1", features = ["diesel"] }
+serde = { version = "1.0.219", features = ["derive"] }
