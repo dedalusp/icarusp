@@ -15,7 +15,7 @@ Este projeto é baseado no sistema [Dedalus](https://dedalus.usp.br) da USP, com
   - **Edição**: Edição do livro.
   - **Ano de Publicação**: Ano de publicação do livro.
   - **Resumo do Conteúdo**: Descrição breve sobre o conteúdo do livro.
- 
+
 - **Cadastro de Papers**: O usuário pode inserir os dados do paper em um formulário com os seguintes campos:
   - **Autor**: Nome do autor do paper.
   - **Título**: Título do paper.
@@ -30,7 +30,7 @@ Este projeto é baseado no sistema [Dedalus](https://dedalus.usp.br) da USP, com
   - **Ano de Publicação**
   - **Resumo do Conteúdo** (ou descrição)
 
-  O sistema retorna os 10 livros mais relevantes, de acordo com os parâmetros de busca fornecidos, utilizando um algoritmo de busca **fuzzy**.
+  O sistema retorna os 10 livros mais relevantes, de acordo com os parâmetros de busca fornecidos, utilizando um algoritmo de busca **vetorial**.
 
 ## Como Funciona
 
@@ -41,16 +41,16 @@ Este projeto é baseado no sistema [Dedalus](https://dedalus.usp.br) da USP, com
 ## Tecnologias Utilizadas
 
 - **Backend**: O sistema utiliza **Rust** para o desenvolvimento do backend.
-- **Banco de Dados**: Utiliza **SQLite** como banco de dados relacional leve para armazenar as informações dos livros.
+- **Banco de Dados**: Utiliza **PostgreSQL [pgvector]** como banco de dados relacional leve para armazenar as informações dos livros.
 - **Frontend**: A interface de usuário é desenvolvida utilizando **Svelte** com **TypeScript**.
-- **Algoritmo de Busca**: O algoritmo de busca é implementado utilizando **fuzzy search**, para encontrar as correspondências mais aproximadas com os termos de pesquisa.
+- **Algoritmo de Busca**: O algoritmo de busca é implementado utilizando **busca vetorial**, para encontrar as correspondências mais aproximadas com os termos de pesquisa.
 
 ## Instalação e Execução
 
 ### Requisitos
 
 - Rust (para o backend)
-- SQLite (para o banco de dados)
+- PostgreSQL com extensão `pgvector` (para o banco de dados)
 - Node.js (para o frontend)
 - npm ou yarn (para gerenciamento de pacotes)
 - Pacotes de dependência (específicos para o backend e frontend)
@@ -69,13 +69,15 @@ Este projeto é baseado no sistema [Dedalus](https://dedalus.usp.br) da USP, com
     Linux quanto OSX).
     - Em seguida, instale **Rust**, **TypeScript** e outras dependências do projeto:
       ```bash
-      brew install rust typescript node sqlite
+      brew install rust diesel typescript node postgres pgvector
+      brew services start postgresql
       ```
 
 3. **Dependências do Backend (Rust)**:
     - Utilizaremos o **Cargo** para gerenciar as dependências do projeto.
       ```bash
       cd backend
+      cargo +stable install cargo-llvm-cov --locked
       cargo build
       ```
 

@@ -1,0 +1,35 @@
+FROM ubuntu:25.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV RUST_VERSION=stable
+
+# Update package list and install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    git \
+    build-essential \
+    rustup \
+    pkg-config \
+    libssl-dev \
+    libpq-dev \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Create application directory
+WORKDIR /app
+
+# Copy backend source code
+COPY backend/ ./
+
+# Build the application
+RUN cargo build --release
+
+# Expose port
+EXPOSE 8080
+
+# Run the application
+CMD ["./target/release/backend"]
