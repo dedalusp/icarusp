@@ -342,7 +342,6 @@ async fn main() -> std::io::Result<()> {
 
     let bind_address = "127.0.0.1:8080";
     log::info!("Starting server at http://{}", bind_address);
-
     HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())

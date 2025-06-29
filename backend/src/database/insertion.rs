@@ -105,8 +105,8 @@ mod tests {
 
         let author = result.unwrap();
         assert_eq!(author.name, "Test Author");
-        assert_eq!(author.nationality, "Brazil");
         assert_eq!(author.birth_year, 2025);
+        assert_eq!(author.country, "Brazil");
         assert!(author.id > 0);
 
         // Cleanup
@@ -182,5 +182,4 @@ mod tests {
             .execute(&mut conn)
             .ok();
     }
-        
 }

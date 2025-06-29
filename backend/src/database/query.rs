@@ -233,7 +233,7 @@ mod tests {
     }
 
     #[test]
-    fn test_query_books_by_embedding() {
+    fn test_similarity_search_by_prompt() {
         if !db_available() {
             return;
         }
@@ -243,13 +243,14 @@ mod tests {
         // Insert test data
         let new_book = NewBook::new(
             "Embedding Test Book",
+            2025,
             "This is a book about testing embeddings",
         )
         .expect("Failed to create book");
         let book = insert_book(&mut conn, &new_book).expect("Failed to insert book");
 
         // Test embedding query
-        let results = query_books_by_embedding(&mut conn, "testing embeddings", 5)
+        let results = similarity_search_by_prompt(&mut conn, "testing embeddings", 5)
             .expect("Failed to query books by embedding");
 
         // Should find at least our test book
