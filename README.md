@@ -8,21 +8,16 @@ Este projeto é baseado no sistema [Dedalus](https://dedalus.usp.br) da USP, com
 
 ## Funcionalidades
 
+- **Cadastro de Autores**: O usuário pode inserir os dados do autores em um formulário com os seguintes campos:
+  - **Autor**: Nome do autor do paper.
+  - **Ano de Nascimento**: Ano de nascimento do autor.
+  - **País de Nascimento**: País de nascimento do autor.
+
 - **Cadastro de Livros**: O usuário pode inserir os dados do livro em um formulário com os seguintes campos:
-  - **Autor**: Nome do autor do livro.
+  - **Autor**: Nome dos autores do livro.
   - **Título**: Título do livro.
-  - **ISBN**: ISBN do livro.
-  - **Edição**: Edição do livro.
   - **Ano de Publicação**: Ano de publicação do livro.
   - **Resumo do Conteúdo**: Descrição breve sobre o conteúdo do livro.
-
-- **Cadastro de Papers**: O usuário pode inserir os dados do paper em um formulário com os seguintes campos:
-  - **Autor**: Nome do autor do paper.
-  - **Título**: Título do paper.
-  - **DOI**: DOI do livro.
-  - **Ano de Publicação**: Ano de publicação do paper.
-  - **Resumo do Conteúdo**: Descrição breve sobre o conteúdo do paper.
-  - **Bibliografia**: Bibliografia do paper.
 
 - **Busca de Livros ou papers**: O usuário pode buscar livros por um ou mais critérios:
   - **Autor**
@@ -77,9 +72,13 @@ Este projeto é baseado no sistema [Dedalus](https://dedalus.usp.br) da USP, com
     - Utilizaremos o **Cargo** para gerenciar as dependências do projeto.
       ```bash
       cd backend
+      diesel setup
       cargo +stable install cargo-llvm-cov --locked
       cargo build
       ```
+      **Observações:**
+      - Certifique-se de alterar o arquivo `.env` com as credenciais do banco de dados.
+      - Caso tenha problemas com a instalação, consulte a documentação oficial do [Diesel](https://diesel.rs/) e [PostgreSQL](https://www.postgresql.org/docs/14/index.html)
 
 3. **Dependências do Frontend (TypeScript)**:
     - Para o frontend, utilizaremos o [npm](https://www.npmjs.com/) para instalar as dependências:
@@ -100,15 +99,12 @@ Este projeto é baseado no sistema [Dedalus](https://dedalus.usp.br) da USP, com
       ```
     - Acesse o serviço via `http://localhost:5173`.
 
-Extra. **Configure o Banco de Dados SQLite**:
-    - O banco de dados será automaticamente criado quando o sistema for executado pela primeira vez. Caso queira realizar a configuração manual, crie um banco de dados SQLite e configure as credenciais no arquivo de configuração do backend.
+Extra. **Configuração do Banco de Dados PostgreSQL**:
+    - O banco de dados será automaticamente criado pelo `diesel` utilizando as *migrations*, definidas no diretório `backend/migrations` quando o sistema for executado pela primeira vez. Caso queira realizar alterar o esquema do banco de dados, você pode criar um novo arquivo de migração utilizando o comando `diesel migration generate <nome_da_migração>`. Em seguida, você pode editar o arquivo de migração gerado para realizar as alterações desejadas no esquema do banco de dados.
 
 ## Algoritmo de Busca
 
-A busca no sistema é realizada utilizando busca vetorial, que permite encontrar livros que possuam conteúdos semelhantes a um dado livro de referência. Para
-ajustar o algoritmo, é necessário alterar o modelo de linguagem utilizado, que
-pode ser encontrado no arquivo `backend/models/model.rs`; assim como o caminho
-para este novo modelo no arquivo `backend/main.rs`.
+A busca no sistema é realizada utilizando busca vetorial, que permite encontrar livros que possuam conteúdos semelhantes a um dado livro de referência. Para ajustar o algoritmo, é necessário alterar o algoritmo que faz a codificação dos vetores de características dos livros, uma extensão interessante da abordagem atual poderia ser utilizando modelos de linguagem (caso tenha interesse, recommendamos olhar a biblioteca [Candle](https://github.com/huggingface/candle)).
 
 ## Contribuições
 
