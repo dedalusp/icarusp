@@ -9,7 +9,7 @@ pub fn establish_connection() -> Result<PgConnection> {
     dotenv().ok();
 
     let database_url = env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost/diesel_demo".to_string());
+        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5433/diesel_demo".to_string());
 
     PgConnection::establish(&database_url)
         .map_err(|e| anyhow::anyhow!("Error connecting to {}: {}", database_url, e))
@@ -18,16 +18,24 @@ pub fn establish_connection() -> Result<PgConnection> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::env; // Make sure env is imported here as well for clarity
 
     #[test]
     fn test_establish_connection() {
         // This test requires a valid database connection
         // Skip if DATABASE_URL is not set properly
         if env::var("DATABASE_URL").is_err() {
+            println!("Skipping test: DATABASE_URL not set. Please create a .env file.");
             return;
         }
 
-        let connection = establish_connection(); // No longer needs _with_error_handling, as it returns Result
+        // Print the DATABASE_URL that the application is actually using
+        let current_db_url = env::var("DATABASE_URL")
+            .unwrap_or_else(|_| "DEFAULT_FALLBACK_URL_USED_IN_TEST".to_string());
+        println!("DATABASE_URL being used by test: {}", current_db_url); // <--- ADD THIS LINE
+
+        let connection = establish_connection();
         assert!(connection.is_ok());
+        println!("Everything OKAY.");
     }
 }

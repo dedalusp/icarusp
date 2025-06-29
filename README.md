@@ -73,6 +73,8 @@ Este projeto é baseado no sistema [Dedalus](https://dedalus.usp.br) da USP, com
       ```bash
       cd backend
       diesel setup
+      diesel migration run
+      diesel print-schema
       cargo +stable install cargo-llvm-cov --locked
       cargo build
       ```
@@ -90,6 +92,12 @@ Este projeto é baseado no sistema [Dedalus](https://dedalus.usp.br) da USP, com
 4. **Iniciar os Servidores (Backend e Frontend)**:
     - Para rodar o backend, utilize o comando:
       ```bash
+      # Bash (using distrobox and PostgreSQL at localhost:5433)
+      export DATABASE_URL="postgres://postgres:postgres@localhost:5433/diesel_demo"
+      # Fish shell
+      set -x DATABASE_URL "postgres://postgres:postgres@localhost:5433/diesel_demo"
+      # To check code coverage
+      cargo llvm-cov run
       cargo run
       ```
     - Em outra aba do terminal, rode o frontend:
