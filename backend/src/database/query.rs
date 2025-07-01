@@ -242,23 +242,36 @@ mod tests {
 
         // Insert test data
         let new_book = NewBook::new(
-            "Embedding Test Book",
+            "Similarity Embedding Test Book",
             2025,
             "This is a book about testing embeddings",
         )
         .expect("Failed to create book");
         let book = insert_book(&mut conn, &new_book).expect("Failed to insert book");
 
+        // Print the book details
+        println!("Book ID: {}", book.id);
+        println!("Title: {}", book.title);
+        println!("Year: {}", book.publication_year);
+        println!("Description: {}", book.abstract_text);
+
         // Test embedding query
-        let results = similarity_search_by_prompt(&mut conn, "testing embeddings", 5)
+        let results = similarity_search_by_prompt(&mut conn, "similarity testing embeddings", 5)
             .expect("Failed to query books by embedding");
 
         // Should find at least our test book
         assert!(!results.is_empty());
 
+        // Print the results
+        for result in results {
+            println!("Title: {}", result.title);
+        }
+
         // Cleanup
         diesel::delete(books::table.filter(books::id.eq(book.id)))
             .execute(&mut conn)
             .ok();
+
+        println!("Similarity search by prompt test completed successfully!");
     }
 }
