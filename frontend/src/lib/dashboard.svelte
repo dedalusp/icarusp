@@ -319,11 +319,19 @@ async function buscaPorAutor() {
                             {#if Array.isArray(resultadoTitulo)}
                                 {#each resultadoTitulo as item, _}
                                     <div class="resultado-item">
-                                        <pre>{JSON.stringify(item, null, 2)}</pre>
+                                        <h3>{item.title}</h3>
+                                        <p><strong>ID:</strong> {item.id}</p>
+                                        <p><strong>Ano de Publicação:</strong> {item.publication_year}</p>
+                                        <p><strong>Resumo:</strong> {item.abstract_text}</p>
                                     </div>
                                 {/each}
                             {:else}
-                                <pre>{JSON.stringify(resultadoTitulo, null, 2)}</pre>
+                                <div class="resultado-item">
+                                    <h3>{resultadoTitulo.title}</h3>
+                                    <p><strong>ID:</strong> {resultadoTitulo.id}</p>
+                                    <p><strong>Ano de Publicação:</strong> {resultadoTitulo.publication_year}</p>
+                                    <p><strong>Resumo:</strong> {resultadoTitulo.abstract_text}</p>
+                                </div>
                             {/if}
                         </div>
                     {/if}   
@@ -341,11 +349,19 @@ async function buscaPorAutor() {
                             {#if Array.isArray(resultadoPublicacoesAutor)}
                                 {#each resultadoPublicacoesAutor as item, _}
                                     <div class="resultado-item">
-                                        <pre>{JSON.stringify(item, null, 2)}</pre>
+                                        <h3>{item.title}</h3>
+                                        <p><strong>ID:</strong> {item.id}</p>
+                                        <p><strong>Ano de Publicação:</strong> {item.publication_year}</p>
+                                        <p><strong>Resumo:</strong> {item.abstract_text}</p>
                                     </div>
                                 {/each}
                             {:else}
-                                <pre>{JSON.stringify(resultadoPublicacoesAutor, null, 2)}</pre>
+                                <div class="resultado-item">
+                                    <h3>{resultadoPublicacoesAutor.title}</h3>
+                                    <p><strong>ID:</strong> {resultadoPublicacoesAutor.id}</p>
+                                    <p><strong>Ano de Publicação:</strong> {resultadoPublicacoesAutor.publication_year}</p>
+                                    <p><strong>Resumo:</strong> {resultadoPublicacoesAutor.abstract_text}</p>
+                                </div>
                             {/if}
                         </div>
                     {/if}   
@@ -363,11 +379,19 @@ async function buscaPorAutor() {
                             {#if Array.isArray(resultadoAutor)}
                                 {#each resultadoAutor as item, _}
                                     <div class="resultado-item">
-                                        <pre>{JSON.stringify(item, null, 2)}</pre>
+                                        <h3>{item.name}</h3>
+                                        <p><strong>ID:</strong> {item.id}</p>
+                                        <p><strong>Ano de Nascimento:</strong> {item.birth_year}</p>
+                                        <p><strong>País:</strong> {item.country}</p>
                                     </div>
                                 {/each}
                             {:else}
-                                <pre>{JSON.stringify(resultadoAutor, null, 2)}</pre>
+                                <div class="resultado-item">
+                                    <h3>{resultadoAutor.name}</h3>
+                                    <p><strong>ID:</strong> {resultadoAutor.id}</p>
+                                    <p><strong>Ano de Nascimento:</strong> {resultadoAutor.birth_year}</p>
+                                    <p><strong>País:</strong> {resultadoAutor.country}</p>
+                                </div>
                             {/if}
                         </div>
                     {/if}   
@@ -550,23 +574,23 @@ async function buscaPorAutor() {
     }
 
     .resultado-item {
-        margin-bottom: 18px;
-        padding: 12px;
+        margin-bottom: 10px; /* Reduz o espaçamento entre os itens */
+        padding: 8px; /* Reduz o espaçamento interno */
         background: #f9f9f9; /* Fundo claro */
-        border-radius: 8px; /* Bordas arredondadas */
+        border-radius: 5px; /* Bordas arredondadas menores */
         border: 1px solid #ddd; /* Bordas suaves */
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra leve */
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Sombra leve */
     }
 
     .resultado-item h3 {
         margin: 0;
-        font-size: 20px;
+        font-size: 18px; /* Tamanho menor para o título */
         color: #333; /* Cor do título */
     }
 
     .resultado-item p {
-        margin: 5px 0;
-        font-size: 16px;
+        margin: 2px 0; /* Reduz o espaçamento entre os parágrafos */
+        font-size: 14px; /* Tamanho menor para o texto */
         color: #555; /* Cor do texto */
     }
 
