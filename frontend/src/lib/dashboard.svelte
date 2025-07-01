@@ -11,14 +11,25 @@ let pais = "";
 let titulo = "";
 let anoPublicacao: number | null = null;
 let resumo = "";
-let autorPub = "";
+let autorPub: number | null = null;
 
 // Buscas
 let resumoBusca = "";
 let tituloBusca = "";
 let nomeBusca = "";
 
-let resultado: any = null;
+// Variáveis de mensagem específicas para cada consulta
+let mensagemVetorial = "";
+let mensagemTitulo = "";
+let mensagemPublicacoesAutor = "";
+let mensagemAutor = "";
+
+// Variáveis de resultado específicas para cada consulta
+let resultadoVetorial: any = null;
+let resultadoTitulo: any = null;
+let resultadoPublicacoesAutor: any = null;
+let resultadoAutor: any = null;
+
 let mensagem = "";
 
 let selectedTab: 'insercao' | 'consulta' = 'insercao';
@@ -54,7 +65,9 @@ async function inserirPublicacao() {
         setTimeout(() => { mensagem = ""; }, 1500);
         return;
     }
-    const res = await fetch(`${BASE}/insert/book`, { // Atualizado para o novo endpoint
+
+    // Inserir publicação
+    const res = await fetch(`${BASE}/insert/book`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -66,11 +79,37 @@ async function inserirPublicacao() {
     const data = await res.json();
     mensagem = data.success ? "Publicação inserida com sucesso!" : `Erro ao inserir publicação: ${data.message}`;
     setTimeout(() => { mensagem = ""; }, 1500);
+    if (data.success) {
+        mensagem = "Publicação inserida com sucesso!";
+        const bookId = data.data.id; // ID da publicação retornada pelo backend
+
+        // Fazer o link entre publicação e autor
+        const linkRes = await fetch(`${BASE}/insert/book-author-link`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                book_id: bookId,
+                authors_ids: [autorPub] // ID do autor fornecido no formulário
+            })
+        });
+
+        const linkData = await linkRes.json();
+        if (linkData.success) {
+            mensagem += " Autor vinculado à publicação com sucesso!";
+        } else {
+            mensagem += ` Erro ao vincular autor à publicação.`;
+        }
+    } else {
+        mensagem = `Erro ao inserir publicação.`;
+    }
+
+    setTimeout(() => { mensagem = ""; }, 1500);
 }
 
 async function buscaVetorial() {
     mensagem = "";
-    resultado = null;
+    mensagemVetorial = "";
+    resultadoVetorial = null;
     try {
         const res = await fetch(`${BASE}/search/book/embedding`, { // Atualizado para o novo endpoint
             method: "POST",
@@ -81,9 +120,9 @@ async function buscaVetorial() {
             })
         });
         const data = await res.json();
-        resultado = data.data;
-        mensagem = (Array.isArray(data.data) && data.data.length === 0) ? "Nenhum resultado encontrado." : "";
-        if (mensagem) setTimeout(() => { mensagem = ""; }, 1500);
+        resultadoVetorial = data.data;
+        mensagemVetorial = (Array.isArray(data.data) && data.data.length === 0) ? "Nenhum resultado encontrado." : "";
+        if (mensagemVetorial) setTimeout(() => { mensagemVetorial = ""; }, 1500);
     } catch (e) {
         mensagem = "Erro ao buscar.";
         setTimeout(() => { mensagem = ""; }, 1500);
@@ -91,8 +130,9 @@ async function buscaVetorial() {
 }
 
 async function buscaPorPublicacoes() {
+    mensagemTitulo = "";
     mensagem = "";
-    resultado = null;
+    resultadoTitulo = null;
     try {
         const res = await fetch(`${BASE}/search/books`, { // Atualizado para o novo endpoint
             method: "POST",
@@ -102,9 +142,9 @@ async function buscaPorPublicacoes() {
             })
         });
         const data = await res.json();
-        resultado = data.data;
-        mensagem = (Array.isArray(data.data) && data.data.length === 0) ? "Nenhum resultado encontrado." : "";
-        if (mensagem) setTimeout(() => { mensagem = ""; }, 1500);
+        resultadoTitulo = data.data;
+        mensagemTitulo = (Array.isArray(data.data) && data.data.length === 0) ? "Nenhum resultado encontrado." : "";
+        if (mensagemTitulo) setTimeout(() => { mensagemTitulo = ""; }, 1500);
     } catch (e) {
         mensagem = "Erro ao buscar.";
         setTimeout(() => { mensagem = ""; }, 1500);
@@ -112,8 +152,9 @@ async function buscaPorPublicacoes() {
 }
 
 async function buscaPorPublicacoesDoAutor() {
+    mensagemPublicacoesAutor = "";
     mensagem = "";
-    resultado = null;
+    resultadoPublicacoesAutor = null;
     try {
         const res = await fetch(`${BASE}/search/author/books`, { // Atualizado para o novo endpoint
             method: "POST",
@@ -123,9 +164,9 @@ async function buscaPorPublicacoesDoAutor() {
             })
         });
         const data = await res.json();
-        resultado = data.data;
-        mensagem = (Array.isArray(data.data) && data.data.length === 0) ? "Nenhum resultado encontrado." : "";
-        if (mensagem) setTimeout(() => { mensagem = ""; }, 1500);
+        resultadoPublicacoesAutor = data.data;
+        mensagemPublicacoesAutor = (Array.isArray(data.data) && data.data.length === 0) ? "Nenhum resultado encontrado." : "";
+        if (mensagemPublicacoesAutor) setTimeout(() => { mensagemPublicacoesAutor = ""; }, 1500);
     } catch (e) {
         mensagem = "Erro ao buscar.";
         setTimeout(() => { mensagem = ""; }, 1500);
@@ -133,8 +174,9 @@ async function buscaPorPublicacoesDoAutor() {
 }
 
 async function buscaPorAutor() {
+    mensagemAutor = "";
     mensagem = "";
-    resultado = null;
+    resultadoAutor = null;
     try {
         const res = await fetch(`${BASE}/search/authors`, { // Atualizado para o novo endpoint
             method: "POST",
@@ -144,9 +186,9 @@ async function buscaPorAutor() {
             })
         });
         const data = await res.json();
-        resultado = data.data;
-        mensagem = (Array.isArray(data.data) && data.data.length === 0) ? "Nenhum resultado encontrado." : "";
-        if (mensagem) setTimeout(() => { mensagem = ""; }, 1500);
+        resultadoAutor = data.data;
+        mensagemAutor = (Array.isArray(data.data) && data.data.length === 0) ? "Nenhum resultado encontrado." : "";
+        if (mensagemAutor) setTimeout(() => { mensagemAutor = ""; }, 1500);
     } catch (e) {
         mensagem = "Erro ao buscar.";
         setTimeout(() => { mensagem = ""; }, 1500);
@@ -219,43 +261,105 @@ async function buscaPorAutor() {
                     <textarea
                         placeholder="Resumo de Conteúdo"
                         class="input-box consulta-content-box"
-                        bind:value={resumo}
+                        bind:value={resumoBusca}
                     ></textarea>
-                    <button on:click={buscaVetorial} class="busca">Buscar</button>       
+                    <button on:click={buscaVetorial} class="busca">Buscar</button>
+                    {#if mensagemVetorial}
+                        <div class="mensagem">{mensagemVetorial}</div>
+                    {/if}
+                    {#if resultadoVetorial}
+                        <div class="panel resultado">
+                            <h3>Resultado</h3>
+                            {#if Array.isArray(resultadoVetorial)}
+                                {#each resultadoVetorial as item, _}
+                                    <div class="resultado-item">
+                                        <h3>{item.title}</h3>
+                                        <p><strong>ID:</strong> {item.id}</p>
+                                        <p><strong>Ano de Publicação:</strong> {item.publication_year}</p>
+                                        <p><strong>Resumo:</strong> {item.abstract_text}</p>
+                                    </div>
+                                {/each}
+                            {:else}
+                                <div class="resultado-item">
+                                    <h3>{resultadoVetorial.title}</h3>
+                                    <p><strong>ID:</strong> {resultadoVetorial.id}</p>
+                                    <p><strong>Ano de Publicação:</strong> {resultadoVetorial.publication_year}</p>
+                                    <p><strong>Resumo:</strong> {resultadoVetorial.abstract_text}</p>
+                                </div>
+                            {/if}
+                        </div>
+                    {/if}    
                 {:else if selectedConsultaTab === 'titulo'}
                     <div class="boxes-group">
                         <input type="text" placeholder="Título" class="input-box" bind:value={tituloBusca} />
                         <button on:click={buscaPorPublicacoes} class="busca">Buscar</button>
                     </div>
+                    {#if mensagemTitulo}
+                        <div class="mensagem">{mensagemTitulo}</div>
+                    {/if}
+                    {#if resultadoTitulo}
+                        <div class="panel resultado">
+                            <h3>Resultado</h3>
+                            {#if Array.isArray(resultadoTitulo)}
+                                {#each resultadoTitulo as item, _}
+                                    <div class="resultado-item">
+                                        <pre>{JSON.stringify(item, null, 2)}</pre>
+                                    </div>
+                                {/each}
+                            {:else}
+                                <pre>{JSON.stringify(resultadoTitulo, null, 2)}</pre>
+                            {/if}
+                        </div>
+                    {/if}   
                 {:else if selectedConsultaTab === 'publicacoesAutor'}
                     <div class="boxes-group">
                         <input type="text" placeholder="Nome do Autor" class="input-box" bind:value={nomeBusca} />
                         <button on:click={buscaPorPublicacoesDoAutor} class="busca">Buscar</button>
                     </div>
+                    {#if mensagemPublicacoesAutor}
+                        <div class="mensagem">{mensagemPublicacoesAutor}</div>
+                    {/if}
+                    {#if resultadoPublicacoesAutor}
+                        <div class="panel resultado">
+                            <h3>Resultado</h3>
+                            {#if Array.isArray(resultadoPublicacoesAutor)}
+                                {#each resultadoPublicacoesAutor as item, _}
+                                    <div class="resultado-item">
+                                        <pre>{JSON.stringify(item, null, 2)}</pre>
+                                    </div>
+                                {/each}
+                            {:else}
+                                <pre>{JSON.stringify(resultadoPublicacoesAutor, null, 2)}</pre>
+                            {/if}
+                        </div>
+                    {/if}   
                 {:else if selectedConsultaTab === 'autor'}
                     <div class="boxes-group">
                         <input type="text" placeholder="Nome do Autor" class="input-box" bind:value={nomeBusca} />
                         <button on:click={buscaPorAutor} class="busca">Buscar</button>
                     </div>
+                    {#if mensagemAutor}
+                        <div class="mensagem">{mensagemAutor}</div>
+                    {/if}
+                    {#if resultadoAutor}
+                        <div class="panel resultado">
+                            <h3>Resultado</h3>
+                            {#if Array.isArray(resultadoAutor)}
+                                {#each resultadoAutor as item, _}
+                                    <div class="resultado-item">
+                                        <pre>{JSON.stringify(item, null, 2)}</pre>
+                                    </div>
+                                {/each}
+                            {:else}
+                                <pre>{JSON.stringify(resultadoAutor, null, 2)}</pre>
+                            {/if}
+                        </div>
+                    {/if}   
                 {/if}
             </div>
         {/if}
         {#if mensagem}
             <div class="mensagem">{mensagem}</div>
-        {/if}
-        {#if resultado}
-            <div class="panel resultado">
-                <h3>Resultado</h3>
-                {#if Array.isArray(resultado)}
-                    {#each resultado as item, _}
-                        <div class="resultado-item">
-                            <pre>{JSON.stringify(item, null, 2)}</pre>
-                        </div>
-                    {/each}
-                {:else}
-                    <pre>{JSON.stringify(resultado, null, 2)}</pre>
-                {/if}
-            </div>
         {/if}
     </section>
 </main>
@@ -432,8 +536,25 @@ async function buscaPorAutor() {
     .resultado-item {
         margin-bottom: 18px;
         padding: 12px;
-        background: #f5f5f5;
-        border-radius: 6px;
-        border: 1px solid #e0e0e0;
+        background: #f9f9f9; /* Fundo claro */
+        border-radius: 8px; /* Bordas arredondadas */
+        border: 1px solid #ddd; /* Bordas suaves */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra leve */
+    }
+
+    .resultado-item h3 {
+        margin: 0;
+        font-size: 20px;
+        color: #333; /* Cor do título */
+    }
+
+    .resultado-item p {
+        margin: 5px 0;
+        font-size: 16px;
+        color: #555; /* Cor do texto */
+    }
+
+    .resultado-item p strong {
+        color: #000; /* Destaque para os rótulos */
     }
 </style>
