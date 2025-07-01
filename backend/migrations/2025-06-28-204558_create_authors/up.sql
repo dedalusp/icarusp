@@ -1,6 +1,6 @@
 CREATE TABLE authors (
   id SERIAL PRIMARY KEY,
-  name VARCHAR NOT NULL,
+  name VARCHAR NOT NULL UNIQUE,
   birth_year INTEGER NOT NULL,
   country VARCHAR NOT NULL
 );
