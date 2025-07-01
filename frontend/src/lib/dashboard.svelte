@@ -286,23 +286,35 @@ async function buscaPorAutor() {
                     {#if resultadoVetorial}
                         <div class="panel resultado">
                             <h3>Resultado</h3>
-                            {#if Array.isArray(resultadoVetorial)}
-                                {#each resultadoVetorial as item, _}
-                                    <div class="resultado-item">
-                                        <h3>{item.title}</h3>
-                                        <p><strong>ID:</strong> {item.id}</p>
-                                        <p><strong>Ano de Publicação:</strong> {item.publication_year}</p>
-                                        <p><strong>Resumo:</strong> {item.abstract_text}</p>
-                                    </div>
-                                {/each}
-                            {:else}
-                                <div class="resultado-item">
-                                    <h3>{resultadoVetorial.title}</h3>
-                                    <p><strong>ID:</strong> {resultadoVetorial.id}</p>
-                                    <p><strong>Ano de Publicação:</strong> {resultadoVetorial.publication_year}</p>
-                                    <p><strong>Resumo:</strong> {resultadoVetorial.abstract_text}</p>
-                                </div>
-                            {/if}
+                            <table class="resultado-tabela">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Título</th>
+                                        <th>Ano de Publicação</th>
+                                        <th>Resumo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {#if Array.isArray(resultadoVetorial)}
+                                        {#each resultadoVetorial as item, _}
+                                            <tr>
+                                                <td>{item.id}</td>
+                                                <td>{item.title}</td>
+                                                <td>{item.publication_year}</td>
+                                                <td>{item.abstract_text}</td>
+                                            </tr>
+                                        {/each}
+                                    {:else}
+                                        <tr>
+                                            <td>{resultadoVetorial.id}</td>
+                                            <td>{resultadoVetorial.title}</td>
+                                            <td>{resultadoVetorial.publication_year}</td>
+                                            <td>{resultadoVetorial.abstract_text}</td>
+                                        </tr>
+                                    {/if}
+                                </tbody>
+                            </table>
                         </div>
                     {/if}    
                 {:else if selectedConsultaTab === 'titulo'}
@@ -316,15 +328,35 @@ async function buscaPorAutor() {
                     {#if resultadoTitulo}
                         <div class="panel resultado">
                             <h3>Resultado</h3>
-                            {#if Array.isArray(resultadoTitulo)}
-                                {#each resultadoTitulo as item, _}
-                                    <div class="resultado-item">
-                                        <pre>{JSON.stringify(item, null, 2)}</pre>
-                                    </div>
-                                {/each}
-                            {:else}
-                                <pre>{JSON.stringify(resultadoTitulo, null, 2)}</pre>
-                            {/if}
+                            <table class="resultado-tabela">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Título</th>
+                                        <th>Ano de Publicação</th>
+                                        <th>Resumo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {#if Array.isArray(resultadoTitulo)}
+                                        {#each resultadoTitulo as item, _}
+                                            <tr>
+                                                <td>{item.id}</td>
+                                                <td>{item.title}</td>
+                                                <td>{item.publication_year}</td>
+                                                <td>{item.abstract_text}</td>
+                                            </tr>
+                                        {/each}
+                                    {:else}
+                                        <tr>
+                                            <td>{resultadoTitulo.id}</td>
+                                            <td>{resultadoTitulo.title}</td>
+                                            <td>{resultadoTitulo.publication_year}</td>
+                                            <td>{resultadoTitulo.abstract_text}</td>
+                                        </tr>
+                                    {/if}
+                                </tbody>
+                            </table>
                         </div>
                     {/if}   
                 {:else if selectedConsultaTab === 'publicacoesAutor'}
@@ -338,15 +370,35 @@ async function buscaPorAutor() {
                     {#if resultadoPublicacoesAutor}
                         <div class="panel resultado">
                             <h3>Resultado</h3>
-                            {#if Array.isArray(resultadoPublicacoesAutor)}
-                                {#each resultadoPublicacoesAutor as item, _}
-                                    <div class="resultado-item">
-                                        <pre>{JSON.stringify(item, null, 2)}</pre>
-                                    </div>
-                                {/each}
-                            {:else}
-                                <pre>{JSON.stringify(resultadoPublicacoesAutor, null, 2)}</pre>
-                            {/if}
+                            <table class="resultado-tabela">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Título</th>
+                                        <th>Ano de Publicação</th>
+                                        <th>Resumo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {#if Array.isArray(resultadoPublicacoesAutor)}
+                                        {#each resultadoPublicacoesAutor as item, _}
+                                            <tr>
+                                                <td>{item.id}</td>
+                                                <td>{item.title}</td>
+                                                <td>{item.publication_year}</td>
+                                                <td>{item.abstract_text}</td>
+                                            </tr>
+                                        {/each}
+                                    {:else}
+                                        <tr>
+                                            <td>{resultadoPublicacoesAutor.id}</td>
+                                            <td>{resultadoPublicacoesAutor.title}</td>
+                                            <td>{resultadoPublicacoesAutor.publication_year}</td>
+                                            <td>{resultadoPublicacoesAutor.abstract_text}</td>
+                                        </tr>
+                                    {/if}
+                                </tbody>
+                            </table>
                         </div>
                     {/if}   
                 {:else if selectedConsultaTab === 'autor'}
@@ -360,15 +412,35 @@ async function buscaPorAutor() {
                     {#if resultadoAutor}
                         <div class="panel resultado">
                             <h3>Resultado</h3>
-                            {#if Array.isArray(resultadoAutor)}
-                                {#each resultadoAutor as item, _}
-                                    <div class="resultado-item">
-                                        <pre>{JSON.stringify(item, null, 2)}</pre>
-                                    </div>
-                                {/each}
-                            {:else}
-                                <pre>{JSON.stringify(resultadoAutor, null, 2)}</pre>
-                            {/if}
+                            <table class="resultado-tabela">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nome</th>
+                                        <th>Ano de Nascimento</th>
+                                        <th>País</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {#if Array.isArray(resultadoAutor)}
+                                        {#each resultadoAutor as item, _}
+                                            <tr>
+                                                <td>{item.id}</td>
+                                                <td>{item.name}</td>
+                                                <td>{item.birth_year}</td>
+                                                <td>{item.country}</td>
+                                            </tr>
+                                        {/each}
+                                    {:else}
+                                        <tr>
+                                            <td>{resultadoAutor.id}</td>
+                                            <td>{resultadoAutor.name}</td>
+                                            <td>{resultadoAutor.birth_year}</td>
+                                            <td>{resultadoAutor.country}</td>
+                                        </tr>
+                                    {/if}
+                                </tbody>
+                            </table>
                         </div>
                     {/if}   
                 {/if}
@@ -549,28 +621,29 @@ async function buscaPorAutor() {
         font-size: 18px;
     }
 
-    .resultado-item {
-        margin-bottom: 18px;
-        padding: 12px;
-        background: #f9f9f9; /* Fundo claro */
-        border-radius: 8px; /* Bordas arredondadas */
+    .resultado-tabela {
+        width: 100%;
+        border-collapse: collapse; /* Remove espaços entre as bordas */
+        margin-top: 10px;
+        font-size: 14px;
+        text-align: left;
+    }
+
+    .resultado-tabela th, .resultado-tabela td {
         border: 1px solid #ddd; /* Bordas suaves */
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra leve */
+        padding: 8px; /* Espaçamento interno */
     }
 
-    .resultado-item h3 {
-        margin: 0;
-        font-size: 20px;
-        color: #333; /* Cor do título */
+    .resultado-tabela th {
+        background-color: #f4f4f4; /* Fundo para cabeçalhos */
+        font-weight: bold; /* Texto em negrito */
     }
 
-    .resultado-item p {
-        margin: 5px 0;
-        font-size: 16px;
-        color: #555; /* Cor do texto */
+    .resultado-tabela tr:nth-child(even) {
+        background-color: #f9f9f9; /* Fundo alternado para linhas pares */
     }
 
-    .resultado-item p strong {
-        color: #000; /* Destaque para os rótulos */
+    .resultado-tabela tr:hover {
+        background-color: #f1f1f1; /* Fundo ao passar o mouse */
     }
 </style>
