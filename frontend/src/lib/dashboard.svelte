@@ -66,6 +66,15 @@ async function inserirPublicacao() {
         return;
     }
 
+    // Certifique-se de que autorPub seja um número
+    const authorId = Number(autorPub);
+
+    if (isNaN(authorId)) {
+        mensagem = "O ID do autor deve ser um número válido.";
+        setTimeout(() => { mensagem = ""; }, 1500);
+        return;
+    }
+
     // Inserir publicação
     const res = await fetch(`${BASE}/insert/book`, {
         method: "POST",
@@ -76,12 +85,14 @@ async function inserirPublicacao() {
             abstract_text: resumo
         })
     });
+
     const data = await res.json();
     mensagem = data.success ? "Publicação inserida com sucesso!" : `Erro ao inserir publicação: ${data.message}`;
     setTimeout(() => { mensagem = ""; }, 1500);
+
     if (data.success) {
-        mensagem = "Publicação inserida com sucesso!";
-        const bookId = data.data.id; // ID da publicação retornada pelo backend
+        const bookId = Number(data.data.id); // Converte o ID da publicação para número
+        mensagem += ` ID da publicação: ${bookId}`;
 
         // Fazer o link entre publicação e autor
         const linkRes = await fetch(`${BASE}/insert/book-author-link`, {
@@ -89,8 +100,13 @@ async function inserirPublicacao() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 book_id: bookId,
-                authors_ids: [autorPub] // ID do autor fornecido no formulário
+                authors_ids: [authorId] // Certifique-se de que authorId é um número
             })
+        });
+
+        console.log("Dados enviados para /insert/book-author-link:", {
+            book_id: bookId,
+            authors_ids: [authorId]
         });
 
         const linkData = await linkRes.json();
@@ -232,7 +248,7 @@ async function buscaPorAutor() {
                     <div class="boxes-group">
                         <input type="text" placeholder="Título" class="input-box" bind:value={titulo} />
                         <input type="number" placeholder="Ano de Publicação" class="input-box" bind:value={anoPublicacao} />
-                        <input type="text" placeholder="Autor" class="input-box" bind:value={autorPub} />
+                        <input type="text" placeholder="ID do Autor" class="input-box" bind:value={autorPub} />
                         <button on:click={inserirPublicacao} class="busca">Inserir Publicação</button>
                     </div>
                     <div class="boxes-group">
