@@ -1,5 +1,4 @@
 <script lang="ts">
-// filepath: /home/miki/IME/Intro a DS/icarusp/frontend/src/lib/dashboard.svelte
 
 const BASE = "http://127.0.0.1:8080";
 
@@ -34,17 +33,17 @@ async function inserirAutor() {
         setTimeout(() => { mensagem = ""; }, 1500);
         return;
     }
-    const res = await fetch(`${BASE}/inserirAutor`, {
+    const res = await fetch(`${BASE}/insert/author`, { // Atualizado para o novo endpoint
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            nome: nomeAutor,
-            ano_nascimento: anoNascimento,
-            pais
+            name: nomeAutor,
+            birth_year: anoNascimento,
+            country: pais
         })
     });
     const data = await res.json();
-    mensagem = data.id > 0 ? "Autor inserido com sucesso!" : "Erro ao inserir autor.";
+    mensagem = data.success ? "Autor inserido com sucesso!" : `Erro ao inserir autor: ${data.message}`;
     setTimeout(() => { mensagem = ""; }, 1500);
 }
 
@@ -55,18 +54,17 @@ async function inserirPublicacao() {
         setTimeout(() => { mensagem = ""; }, 1500);
         return;
     }
-    const res = await fetch(`${BASE}/inserirPublicacao`, {
+    const res = await fetch(`${BASE}/insert/book`, { // Atualizado para o novo endpoint
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            titulo,
-            ano_publicacao: anoPublicacao,
-            resumo,
-            autor: autorPub
+            title: titulo,
+            publication_year: anoPublicacao,
+            abstract_text: resumo
         })
     });
     const data = await res.json();
-    mensagem = data.publicacao_id > 0 ? "Publicação inserida com sucesso!" : "Erro ao inserir publicação.";
+    mensagem = data.success ? "Publicação inserida com sucesso!" : `Erro ao inserir publicação: ${data.message}`;
     setTimeout(() => { mensagem = ""; }, 1500);
 }
 
@@ -74,10 +72,17 @@ async function buscaVetorial() {
     mensagem = "";
     resultado = null;
     try {
-        const res = await fetch(`${BASE}/buscaVetorial?resumo=${encodeURIComponent(resumoBusca)}`);
+        const res = await fetch(`${BASE}/search/book/embedding`, { // Atualizado para o novo endpoint
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                query: resumoBusca,
+                limit: 10
+            })
+        });
         const data = await res.json();
-        resultado = data;
-        mensagem = (Array.isArray(data) && data.length === 0) ? "Nenhum resultado encontrado." : "";
+        resultado = data.data;
+        mensagem = (Array.isArray(data.data) && data.data.length === 0) ? "Nenhum resultado encontrado." : "";
         if (mensagem) setTimeout(() => { mensagem = ""; }, 1500);
     } catch (e) {
         mensagem = "Erro ao buscar.";
@@ -89,10 +94,16 @@ async function buscaPorPublicacoes() {
     mensagem = "";
     resultado = null;
     try {
-        const res = await fetch(`${BASE}/buscaPorPublicacoes?titulo=${encodeURIComponent(tituloBusca)}`);
+        const res = await fetch(`${BASE}/search/books`, { // Atualizado para o novo endpoint
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                title: tituloBusca
+            })
+        });
         const data = await res.json();
-        resultado = data;
-        mensagem = (Array.isArray(data) && data.length === 0) ? "Nenhum resultado encontrado." : "";
+        resultado = data.data;
+        mensagem = (Array.isArray(data.data) && data.data.length === 0) ? "Nenhum resultado encontrado." : "";
         if (mensagem) setTimeout(() => { mensagem = ""; }, 1500);
     } catch (e) {
         mensagem = "Erro ao buscar.";
@@ -104,10 +115,16 @@ async function buscaPorPublicacoesDoAutor() {
     mensagem = "";
     resultado = null;
     try {
-        const res = await fetch(`${BASE}/buscaPorPublicacoesDoAutor?nome=${encodeURIComponent(nomeBusca)}`);
+        const res = await fetch(`${BASE}/search/author/books`, { // Atualizado para o novo endpoint
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                author_name: nomeBusca
+            })
+        });
         const data = await res.json();
-        resultado = data;
-        mensagem = (Array.isArray(data) && data.length === 0) ? "Nenhum resultado encontrado." : "";
+        resultado = data.data;
+        mensagem = (Array.isArray(data.data) && data.data.length === 0) ? "Nenhum resultado encontrado." : "";
         if (mensagem) setTimeout(() => { mensagem = ""; }, 1500);
     } catch (e) {
         mensagem = "Erro ao buscar.";
@@ -119,10 +136,16 @@ async function buscaPorAutor() {
     mensagem = "";
     resultado = null;
     try {
-        const res = await fetch(`${BASE}/buscaPorAutor?nome=${encodeURIComponent(nomeBusca)}`);
+        const res = await fetch(`${BASE}/search/authors`, { // Atualizado para o novo endpoint
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                name: nomeBusca
+            })
+        });
         const data = await res.json();
-        resultado = data;
-        mensagem = (Array.isArray(data) && data.length === 0) ? "Nenhum resultado encontrado." : "";
+        resultado = data.data;
+        mensagem = (Array.isArray(data.data) && data.data.length === 0) ? "Nenhum resultado encontrado." : "";
         if (mensagem) setTimeout(() => { mensagem = ""; }, 1500);
     } catch (e) {
         mensagem = "Erro ao buscar.";
