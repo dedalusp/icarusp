@@ -12,6 +12,7 @@ let titulo = "";
 let anoPublicacao: number | null = null;
 let resumo = "";
 let autorPub: number | null = null;
+let autoresPub = "";
 
 // Buscas
 let resumoBusca = "";
@@ -54,23 +55,23 @@ async function inserirAutor() {
         })
     });
     const data = await res.json();
-    mensagem = data.success ? "Autor inserido com sucesso!" : `Erro ao inserir autor: ${data.message}`;
+    mensagem = data.success ? "Autor inserido com sucesso!" : `Erro ao inserir autor.`;
     setTimeout(() => { mensagem = ""; }, 1500);
 }
 
 async function inserirPublicacao() {
     mensagem = "";
-    if (!titulo || !anoPublicacao || !autorPub || !resumo) {
+    if (!titulo || !anoPublicacao || !resumo || !autoresPub) {
         mensagem = "Preencha todos os campos para inserir a publicação.";
         setTimeout(() => { mensagem = ""; }, 1500);
         return;
     }
 
-    // Certifique-se de que autorPub seja um número
-    const authorId = Number(autorPub);
+    // Converter os IDs dos autores em uma lista de números
+    const authorsIds = autoresPub.split(",").map(id => parseInt(id.trim())).filter(id => !isNaN(id));
 
-    if (isNaN(authorId)) {
-        mensagem = "O ID do autor deve ser um número válido.";
+    if (authorsIds.length === 0) {
+        mensagem = "Insira pelo menos um ID de autor válido.";
         setTimeout(() => { mensagem = ""; }, 1500);
         return;
     }
@@ -87,31 +88,23 @@ async function inserirPublicacao() {
     });
 
     const data = await res.json();
-    mensagem = data.success ? "Publicação inserida com sucesso!" : `Erro ao inserir publicação: ${data.message}`;
-    setTimeout(() => { mensagem = ""; }, 1500);
-
     if (data.success) {
-        const bookId = Number(data.data.id); // Converte o ID da publicação para número
-        mensagem += ` ID da publicação: ${bookId}`;
+        mensagem = "Publicação inserida com sucesso!";
+        const bookId = data.data.id; // ID da publicação retornada pelo backend
 
-        // Fazer o link entre publicação e autor
+        // Fazer o link entre publicação e autores
         const linkRes = await fetch(`${BASE}/insert/book-author-link`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 book_id: bookId,
-                authors_ids: [authorId] // Certifique-se de que authorId é um número
+                authors_ids: authorsIds // Lista de IDs dos autores como números
             })
-        });
-
-        console.log("Dados enviados para /insert/book-author-link:", {
-            book_id: bookId,
-            authors_ids: [authorId]
         });
 
         const linkData = await linkRes.json();
         if (linkData.success) {
-            mensagem += " Autor vinculado à publicação com sucesso!";
+            mensagem += " Autores vinculados à publicação com sucesso!";
         } else {
             mensagem += ` Erro ao vincular autor à publicação.`;
         }
@@ -248,7 +241,12 @@ async function buscaPorAutor() {
                     <div class="boxes-group">
                         <input type="text" placeholder="Título" class="input-box" bind:value={titulo} />
                         <input type="number" placeholder="Ano de Publicação" class="input-box" bind:value={anoPublicacao} />
-                        <input type="text" placeholder="ID do Autor" class="input-box" bind:value={autorPub} />
+                        <input
+                            type="text"
+                            placeholder="IDs dos Autores (use ',')"
+                            class="input-box"
+                            bind:value={autoresPub}
+                        />
                         <button on:click={inserirPublicacao} class="busca">Inserir Publicação</button>
                     </div>
                     <div class="boxes-group">
