@@ -6,6 +6,8 @@ Este projeto é baseado no sistema [Dedalus](https://dedalus.usp.br) da USP, com
 
 2. **Busca de Livros ou papers**: Outro usuário pode buscar livros ou papers inserindo qualquer uma das seguintes informações: **Autor**, **Título**, **Ano de Publicação** ou **Resumo do Conteúdo**. O sistema retorna os 10 livros mais próximos da busca, com base nos critérios fornecidos.
 
+Uma demo do funcionamento do sistema pode ser encontrada [aqui](https://youtu.be/IPLE8zzN6m8).
+
 ## Funcionalidades
 
 - **Cadastro de Autores**: O usuário pode inserir os dados do autores em um formulário com os seguintes campos:
